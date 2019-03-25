@@ -8,10 +8,13 @@ import (
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/common/log"
 	"net/http"
+	"gopkg.in/alecthomas/kingpin.v2"
 )
 
 func main() {
 	var configFile string
+	
+	log.AddFlags(kingpin.CommandLine)
 
 	flag.StringVar(&configFile, "config", "newrelic_exporter.yml", "Config file path. Defaults to 'newrelic_exporter.yml'")
 	flag.Parse()
