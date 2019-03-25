@@ -83,6 +83,7 @@ func NewAPI(c config.Config) *API {
 	return &API{
 		server:  *serverURL,
 		apiKey:  cfg.NRApiKey,
+		appList: cfg.NRApps,
 		service: cfg.NRService,
 		client:  client,
 		Period:  cfg.NRPeriod,
@@ -90,9 +91,9 @@ func NewAPI(c config.Config) *API {
 }
 
 func (api *API) GetApplications() ([]Application, error) {
-	log.Infof("Requesting application list from %s.", api.server.String())
+	log.Infof("Requesting application list from %s restricted to %v app ids.", api.server.String(), len(api.appList))
 
-	body, err := api.req(fmt.Sprintf("/v2/%s.json", api.service), "")
+	body, err := api.req(fmt.Sprintf("/v2/%s.json", api.service), json.Marshal(api.appList))
 	if err != nil {
 		log.Error("Error getting application list: ", err)
 		return nil, err
@@ -323,7 +324,7 @@ func (api *API) req(path string, params string) ([]byte, error) {
 	}
 	u.RawQuery = params
 
-	//log.Debug("Making API call: ", u.String())
+	log.Debug("Making API call: ", u.String())
 
 	req := &http.Request{
 		Method: "GET",
