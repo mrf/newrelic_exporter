@@ -1,7 +1,6 @@
 package main
 
 import (
-	"flag"
 	"github.com/invokermain/newrelic_exporter/config"
 	"github.com/invokermain/newrelic_exporter/exporter"
 	"github.com/invokermain/newrelic_exporter/newrelic"
@@ -12,14 +11,17 @@ import (
 )
 
 func main() {
-	var configFile string
+	var (
+		configFile = kingping.Flag("config", "Config file path. Defaults to 'newrelic_exporter.yml'").Default("newrelic_exporter.yml").String()
+	)
 	
+	// Parse Flags
 	log.AddFlags(kingpin.CommandLine)
+	kingpin.Version(version.Print("newrelic_exporter"))
+	kingpin.HelpFlag.Short('h')
+	kingpin.Parse()
 
-	flag.StringVar(&configFile, "config", "newrelic_exporter.yml", "Config file path. Defaults to 'newrelic_exporter.yml'")
-	flag.Parse()
-
-	cfg, err := config.GetConfig(configFile)
+	cfg, err := config.GetConfig(*configFile)
 
 	api := newrelic.NewAPI(cfg)
 
