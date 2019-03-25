@@ -6,7 +6,7 @@ import (
 	"github.com/mrf/newrelic_exporter/exporter"
 	"github.com/mrf/newrelic_exporter/newrelic"
 	"github.com/prometheus/client_golang/prometheus"
-	"github.com/prometheus/log"
+	"github.com/prometheus/common/tree/master/log"
 	"net/http"
 )
 
