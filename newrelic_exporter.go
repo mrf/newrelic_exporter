@@ -36,10 +36,10 @@ func main() {
 `))
 	})
 
-	log.Printf("Listening on %s.", cfg.ListenAddress)
+	log.Infof("Listening on %s.", cfg.ListenAddress)
 	err = http.ListenAndServe(cfg.ListenAddress, nil)
 	if err != nil {
 		log.Fatal(err)
 	}
-	log.Print("HTTP server stopped.")
+	log.Infor("HTTP server stopped.")
 }
