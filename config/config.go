@@ -1,7 +1,7 @@
 package config
 
 import (
-	"github.com/prometheus/log"
+	"github.com/prometheus/common/tree/master/log"
 	"gopkg.in/yaml.v2"
 	"io/ioutil"
 	"time"
