@@ -6,13 +6,14 @@ import (
 	"github.com/invokermain/newrelic_exporter/newrelic"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/common/log"
+	"github.com/prometheus/common/version"
 	"net/http"
 	"gopkg.in/alecthomas/kingpin.v2"
 )
 
 func main() {
 	var (
-		configFile = kingping.Flag("config", "Config file path. Defaults to 'newrelic_exporter.yml'").Default("newrelic_exporter.yml").String()
+		configFile = kingpin.Flag("config", "Config file path. Defaults to 'newrelic_exporter.yml'").Default("newrelic_exporter.yml").String()
 	)
 	
 	// Parse Flags
