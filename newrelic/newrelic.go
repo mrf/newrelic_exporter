@@ -34,6 +34,7 @@ type API struct {
 	Period          int
 	unreportingApps bool
 	client          *http.Client
+	appList		[]int
 }
 
 type Application struct {
@@ -93,7 +94,8 @@ func NewAPI(c config.Config) *API {
 func (api *API) GetApplications() ([]Application, error) {
 	log.Infof("Requesting application list from %s restricted to %v app ids.", api.server.String(), len(api.appList))
 
-	body, err := api.req(fmt.Sprintf("/v2/%s.json", api.service), json.Marshal(api.appList))
+	s, _ := json.Marshal(api.appList)
+	body, err := api.req(fmt.Sprintf("/v2/%s.json", api.service), s)
 	if err != nil {
 		log.Error("Error getting application list: ", err)
 		return nil, err
