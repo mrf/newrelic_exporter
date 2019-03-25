@@ -2,8 +2,8 @@ package exporter
 
 import (
 	"fmt"
-	"github.com/mrf/newrelic_exporter/config"
-	"github.com/mrf/newrelic_exporter/newrelic"
+	"github.com/invokermain/newrelic_exporter/config"
+	"github.com/invokermain/newrelic_exporter/newrelic"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/common/log"
 	"sync"
