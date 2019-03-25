@@ -96,7 +96,7 @@ func (api *API) GetApplications() ([]Application, error) {
 
 	s, _ := json.Marshal(api.appList)
 	params := url.Values{}
-	params.Add("filter[ids]", s)
+	params.Add("filter[ids]", fmt.Sprint(s))
 	body, err := api.req(fmt.Sprintf("/v2/%s.json", api.service), params.Encode())
 	if err != nil {
 		log.Error("Error getting application list: ", err)
