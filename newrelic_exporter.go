@@ -41,5 +41,5 @@ func main() {
 	if err != nil {
 		log.Fatal(err)
 	}
-	log.Infor("HTTP server stopped.")
+	log.Info("HTTP server stopped.")
 }
