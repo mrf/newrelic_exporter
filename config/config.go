@@ -16,7 +16,7 @@ type Config struct {
 	NRAppListCacheTime     time.Duration `yaml:"api.apps-list-cache-time"`
 	NRMetricNamesCacheTime time.Duration `yaml:"api.metric-names-cache-time"`
 	NRService              string        `yaml:"api.service"`
-	NRApps                 []int	     `yaml:"api.include-apps"`
+	NRApps                 []string	     `yaml:"api.include-apps"`
 	NRMetricFilters        []string      `yaml:"api.include-metric-filters"`
 	NRValueFilters         []string      `yaml:"api.include-values"`
 

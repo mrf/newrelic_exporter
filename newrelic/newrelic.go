@@ -14,6 +14,7 @@ import (
 	"strconv"
 	"sync"
 	"time"
+	"strings"
 )
 
 // Module version
@@ -34,7 +35,7 @@ type API struct {
 	Period          int
 	unreportingApps bool
 	client          *http.Client
-	appList		[]int
+	appList					[]int
 }
 
 type Application struct {
@@ -53,7 +54,7 @@ type MetricName struct {
 type MetricData struct {
 	Name       string
 	Timeslices []struct {
-		Values map[string]interface{}
+	Values map[string]interface{}
 	}
 }
 
@@ -94,9 +95,9 @@ func NewAPI(c config.Config) *API {
 func (api *API) GetApplications() ([]Application, error) {
 	log.Infof("Requesting application list from %s restricted to %v app ids.", api.server.String(), len(api.appList))
 
-	s, _ := json.Marshal(api.appList)
 	params := url.Values{}
-	params.Add("filter[ids]", fmt.Sprint(s))
+	params.Add("filter[ids]", strings.Trim(strings.Join(api.appList, ","), "[]"))
+	log.Debugf("%s", (strings.Trim(strings.Join(api.appList, ","), "[]")))
 	body, err := api.req(fmt.Sprintf("/v2/%s.json", api.service), params.Encode())
 	if err != nil {
 		log.Error("Error getting application list: ", err)
