@@ -2,16 +2,18 @@
 
 Prometheus exporter for New Relic data.
 Requires a New Relic account.
+Compared to mrf/newrelic_exporter has working appId Filter, can pass --log.level=debug etc. as a flag to change debugging level.
+Deprecated logging package has been updated to currently maintained Prometheus logging package,.
 ## Building and running
 
 ### Running in a container
 
     cp newrelic_exporter.yml.example newrelic_exporter.yml
-	docker run mrf/newrelic-exporter
+	docker run invokermain/newrelic-exporter
 
 ### From source
 
-	git clone https://github.com/mrf/newrelic_exporter.git --branch release
+	git clone https://github.com/invokermain/newrelic_exporter.git --branch release
 	cd newrelic_exporter
     make
     cp newrelic_exporter.yml.example newrelic_exporter.yml
