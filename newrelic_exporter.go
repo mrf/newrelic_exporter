@@ -15,7 +15,7 @@ func main() {
 	var (
 		configFile = kingpin.Flag("config", "Config file path. Defaults to 'newrelic_exporter.yml'").Default("newrelic_exporter.yml").String()
 	)
-	
+
 	// Parse Flags
 	log.AddFlags(kingpin.CommandLine)
 	kingpin.Version(version.Print("newrelic_exporter"))

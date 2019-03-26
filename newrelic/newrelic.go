@@ -35,7 +35,7 @@ type API struct {
 	Period          int
 	unreportingApps bool
 	client          *http.Client
-	appList					[]int
+	appList					[]string
 }
 
 type Application struct {
@@ -97,7 +97,6 @@ func (api *API) GetApplications() ([]Application, error) {
 
 	params := url.Values{}
 	params.Add("filter[ids]", strings.Trim(strings.Join(api.appList, ","), "[]"))
-	log.Debugf("%s", (strings.Trim(strings.Join(api.appList, ","), "[]")))
 	body, err := api.req(fmt.Sprintf("/v2/%s.json", api.service), params.Encode())
 	if err != nil {
 		log.Error("Error getting application list: ", err)
