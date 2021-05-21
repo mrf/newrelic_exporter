@@ -6,16 +6,15 @@ Requires a New Relic account.
 
 ### Running in a container
 
-    cp newrelic_exporter.yml.example newrelic_exporter.yml
+  cp newrelic_exporter.yml.example newrelic_exporter.yml
 	docker run mrf/newrelic-exporter
 
 ### From source
 
-	git clone https://github.com/mrf/newrelic_exporter.git --branch release
-	cd newrelic_exporter
-    make
-    cp newrelic_exporter.yml.example newrelic_exporter.yml
-    ./newrelic_exporter
+  git clone https://github.com/mrf/newrelic_exporter.git
+  cd newrelic_exporter
+  cp newrelic_exporter.yml.example newrelic_exporter.yml
+  ./newrelic_exporter
 
 ## Flags
 
@@ -40,3 +39,7 @@ api.include-values          | List of values to filter by to reduce number of AP
 web.listen-address          | Address to listen on for web interface and telemetry.  Port defaults to 9126.
 web.telemetry-path          | Path under which to expose metrics.
 debug.proxy-address         | Proxy settings for debugging
+
+## Testing
+
+`go test`

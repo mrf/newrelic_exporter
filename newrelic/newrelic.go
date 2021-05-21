@@ -6,7 +6,7 @@ import (
 	"fmt"
 	"github.com/antonholmquist/jason"
 	"github.com/mrf/newrelic_exporter/config"
-	"github.com/prometheus/log"
+	log "github.com/sirupsen/logrus"
 	"github.com/tomnomnom/linkheader"
 	"io/ioutil"
 	"net/http"

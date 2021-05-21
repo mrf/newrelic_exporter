@@ -26,3 +26,5 @@ _testmain.go
 
 newrelic_exporter
 newrelic_exporter.yml
+
+.idea

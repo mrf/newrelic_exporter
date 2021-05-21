@@ -1,8 +1,8 @@
 # NewRelic API key. Mandatory
-api.key: CHANGEME 
+api.key: "205071e37e95bdaa327c62ccd3201da9289ccd17"
 
 # API location
-api.server:	https://api.newrelic.com
+api.server:	https://example.com
 
 # Period of data to request, in seconds
 api.period: 60

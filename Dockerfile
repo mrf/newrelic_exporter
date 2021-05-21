@@ -1,4 +1,4 @@
-FROM golang:1.13.9 AS builder
+FROM golang:1.16.3 AS builder
 
 COPY . /app
 

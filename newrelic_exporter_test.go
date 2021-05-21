@@ -1,15 +1,18 @@
 package main
 
 import (
-	"crypto/tls"
+	"flag"
 	"fmt"
+	"github.com/mrf/newrelic_exporter/config"
+	"github.com/mrf/newrelic_exporter/exporter"
+	"github.com/mrf/newrelic_exporter/newrelic"
+	"github.com/prometheus/client_golang/prometheus"
 	"io/ioutil"
 	"net/http"
 	"net/http/httptest"
 	"testing"
 	"time"
 )
-
 var testApiKey string = "205071e37e95bdaa327c62ccd3201da9289ccd17"
 var testApiAppId int = 9045822
 var testTimeout time.Duration = 5 * time.Second
@@ -24,28 +27,23 @@ func TestAppListGet(t *testing.T) {
 
 	defer ts.Close()
 
-	api := NewNewRelicAPI(ts.URL, testApiKey, testTimeout)
-	api.client = &http.Client{
-		Timeout: testTimeout,
-		Transport: &http.Transport{
-			TLSClientConfig: &tls.Config{
-				InsecureSkipVerify: true,
-			},
-		},
-	}
+	var configFile string
+	flag.StringVar(&configFile, "config", "_testing/newrelic_exporter_test_config.yml", "Config file path. Defaults to 'newrelic_exporter.yml'")
+	flag.Parse()
+	cfg, err := config.GetConfig(configFile)
+	cfg.NRApiServer = ts.URL
+	api := newrelic.NewAPI(cfg)
 
-	var app AppList
-
-	err = app.get(api)
+	app,err := api.GetApplications()
 	if err != nil {
 		t.Fatal(err)
 	}
 
-	if len(app.Applications) != 1 {
-		t.Fatal("Expected 1 application, got", len(app.Applications))
+	if len(app) != 1 {
+		t.Fatal("Expected 1 application, got", len(app))
 	}
 
-	a := app.Applications[0]
+	a := app[0]
 
 	switch {
 
@@ -80,35 +78,30 @@ func TestMetricNamesGet(t *testing.T) {
 
 	defer ts.Close()
 
-	api := NewNewRelicAPI(ts.URL, testApiKey, testTimeout)
-	api.client = &http.Client{
-		Timeout: testTimeout,
-		Transport: &http.Transport{
-			TLSClientConfig: &tls.Config{
-				InsecureSkipVerify: true,
-			},
-		},
-	}
+	var configFile string
+	flag.StringVar(&configFile, "config", "_testing/newrelic_exporter_test_config.yml", "Config file path. Defaults to 'newrelic_exporter.yml'")
+	flag.Parse()
+	cfg, err := config.GetConfig(configFile)
+	cfg.NRApiServer = ts.URL
+	api := newrelic.NewAPI(cfg)
 
-	var names MetricNames
-
-	err = names.get(api, testApiAppId)
+	names,err := api.GetMetricNames(testApiAppId)
 	if err != nil {
 		t.Fatal(err)
 	}
 
-	if len(names.Metrics) != 2 {
-		t.Fatal("Expected 2 name sets, got", len(names.Metrics))
+	if len(names) != 2 {
+		t.Fatal("Expected 2 name sets, got", len(names))
 	}
 
-	if len(names.Metrics[0].Values) != 10 {
+	if len(names[0].ValueNames) != 10 {
 		t.Fatal("Expected 10 metric names")
 	}
 
-	if names.Metrics[0].Name != "Datastore/statement/JDBC/messages/insert" {
+	if names[0].Name != "Datastore/statement/JDBC/messages/insert" {
 		t.Fatal("Wrong application name")
 	}
-	if names.Metrics[1].Name != "Datastore/statement/JDBC/messages/update" {
+	if names[1].Name != "Datastore/statement/JDBC/messages/update" {
 		t.Fatal("Wrong application name")
 	}
 
@@ -123,38 +116,32 @@ func TestMetricValuesGet(t *testing.T) {
 
 	defer ts.Close()
 
-	api := NewNewRelicAPI(ts.URL, testApiKey, testTimeout)
-	api.client = &http.Client{
-		Timeout: testTimeout,
-		Transport: &http.Transport{
-			TLSClientConfig: &tls.Config{
-				InsecureSkipVerify: true,
-			},
-		},
-	}
+	var configFile string
+	flag.StringVar(&configFile, "config", "_testing/newrelic_exporter_test_config.yml", "Config file path. Defaults to 'newrelic_exporter.yml'")
+	flag.Parse()
+	cfg, err := config.GetConfig(configFile)
+	cfg.NRApiServer = ts.URL
+	api := newrelic.NewAPI(cfg)
 
-	var data MetricData
-	var names MetricNames
-
-	err = names.get(api, testApiAppId)
+	names,err := api.GetMetricNames(testApiAppId)
 	if err != nil {
 		t.Fatal(err)
 	}
 
-	err = data.get(api, testApiAppId, names)
+	data,err := api.GetMetricData(testApiAppId,names, time.Now(),time.Now())
 	if err != nil {
 		t.Fatal(err)
 	}
 
-	if len(data.Metric_Data.Metrics) != 1 {
+	if len(data) != 1 {
 		t.Fatal("Expected 1 metric sets")
 	}
 
-	if len(data.Metric_Data.Metrics[0].Timeslices) != 1 {
+	if len(data[0].Timeslices) != 1 {
 		t.Fatal("Expected 1 timeslice")
 	}
 
-	appData := data.Metric_Data.Metrics[0].Timeslices[0]
+	appData := data[0].Timeslices[0]
 
 	if len(appData.Values) != 10 {
 		t.Fatal("Expected 10 data points")
@@ -179,22 +166,19 @@ func TestScrapeAPI(t *testing.T) {
 
 	defer ts.Close()
 
-	exporter := NewExporter()
-	exporter.api = NewNewRelicAPI(ts.URL, testApiKey, testTimeout)
-	exporter.api.client = &http.Client{
-		Timeout: testTimeout,
-		Transport: &http.Transport{
-			TLSClientConfig: &tls.Config{
-				InsecureSkipVerify: true,
-			},
-		},
-	}
+	var configFile string
+	flag.StringVar(&configFile, "config", "_testing/newrelic_exporter_test_config.yml", "Config file path. Defaults to 'newrelic_exporter.yml'")
+	flag.Parse()
+	cfg, err := config.GetConfig(configFile)
+	cfg.NRApiServer = ts.URL
+	api := newrelic.NewAPI(cfg)
+	exporter := exporter.NewExporter(api,cfg)
 
-	var recieved []Metric
+	var recieved []prometheus.Metric
 
-	metrics := make(chan Metric)
+	metrics := make(chan prometheus.Metric)
 
-	go exporter.scrape(metrics)
+	go exporter.Collect(metrics)
 
 	for m := range metrics {
 		recieved = append(recieved, m)
@@ -208,7 +192,7 @@ func TestScrapeAPI(t *testing.T) {
 
 func testServer() (ts *httptest.Server, err error) {
 
-	ts = httptest.NewTLSServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+	ts = httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 
 		if r.Header.Get("X-Api-Key") != testApiKey {
 			w.WriteHeader(403)
