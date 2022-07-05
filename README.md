@@ -7,7 +7,7 @@ Requires a New Relic account.
 ### Running in a container
 
     cp newrelic_exporter.yml.example newrelic_exporter.yml
-	docker run mrf/newrelic-exporter
+	docker run klinux/newrelic-exporter
 
 ### From source
 
