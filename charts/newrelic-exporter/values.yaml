@@ -1,0 +1,73 @@
+## Deployment
+
+#- Image pull secret
+imagePullSecrets: ""
+
+#- Container name
+containerName: newrelic-exporter
+
+#- Image definition
+image:
+  registry: klinux
+  image: newrelic-exporter
+  tag: "1.0.0"
+  pullPolicy: IfNotPresent
+
+#- Port used
+service:
+  port: "9126"
+
+#- Config definitions
+nr-api-key: ""
+nr-server: "https://api.newrelic.com"
+nr-period: 60
+nr-timeout: 15s
+nr-apps-list-cache-time: 1m
+nr-metric-names-cache-time: ""
+nr-service: "applications"
+nr-include-apps: ""
+nr-include-metric-filters: ""
+nr-include-values: ""
+nr-telemetry-path: "/metrics"
+nr-debug: false
+nr-debug.proxy-address: "https://localhost:8888"
+
+#- Extra envs
+extraEnvs: []
+# extraEnvs:
+#   - name: FOO
+#     valueFrom:
+#       secretKeyRef:
+#         key: FOO
+#         name: secret-resource
+
+#- Labels and Pod Labels
+labels: {}
+
+commonLabels: {}
+# scmhash: abc123
+# myLabel: aakkmd
+
+podLabels: {}
+
+#- Annotations
+annotations: {}
+
+#- Resources
+resources:
+  limits:
+    cpu: 100m
+    memory: 128Mi
+  requests:
+    cpu: 50m
+    memory: 64Mi
+
+#- Tolerations and NodeSelector
+tolerations: []
+#  - key: "key"
+#    operator: "Equal|Exists"
+#    value: "value"
+#    effect: "NoSchedule|PreferNoSchedule|NoExecute(1.6 only)"
+
+nodeSelector: {}
+

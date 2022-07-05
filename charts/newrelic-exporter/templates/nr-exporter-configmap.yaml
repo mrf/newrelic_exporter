@@ -1,0 +1,37 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ include "nr-exporter.fullname" . }}-config
+  labels:
+    {{- include "nr-exporter.selectorLabels" . | nindent 4 }}
+data:
+  newrelic_exporter.yml: |-
+    api.key: {{ .Values.nr-api-key }}
+
+    api.server: {{ .Values.nr-server }} 
+
+    api.period: {{ .Values.nr-period }}
+
+    api.timeout: {{ .Values.nr-timeout }}
+
+    api.service: {{ .Values.nr-apps-list-cache-time }}
+
+    api.apps-list-cache-time: {{ .Values.nr-metric-names-cache-time }}
+
+    api.metric-names-cache-time: {{ .Values.nr-service }}
+
+    api.include-apps: {{ .Values.nr-include-apps }}
+
+    api.include-metric-filters: {{ .Values.nr-include-metric-filters }}
+
+    api.include-values: {{ .Values.nr-period }}
+
+    web.listen-address: ":{{ .Values.service.port }}"
+
+    web.telemetry-path: "{{ .Values.nr-telemetry-path }}"
+
+    {{- if .Values.nr-debug }}
+    debug.proxy-address: "{{ .Values.nr-debug.proxy-address }}"
+    {{ else }}
+    # debug.proxy-address: "{{ .Values.nr-debug.proxy-address }}"
+    {{- endif }}

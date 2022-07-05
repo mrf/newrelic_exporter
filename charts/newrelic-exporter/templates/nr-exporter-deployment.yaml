@@ -1,0 +1,81 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "nr-exporter.fullname" . }}
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "nr-exporter.labels" . | nindent 4 }}
+    app.kubernetes.io/component: nr-exporter
+    {{- with .Values.labels }}
+    {{- toYaml . | nindent 4 }}
+    {{- end }}
+  {{- if .Values.annotations }}
+  annotations: {{ toYaml .Values.annotations | nindent 4 }}
+  {{- end }}
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      {{- include "nr-exporter.selectorLabels" . | nindent 6 }}
+      app.kubernetes.io/component: nr-exporter
+  template:
+    metadata:
+      labels:
+        {{- include "nr-exporter.selectorLabels" . | nindent 8 }}
+        app.kubernetes.io/component: nr-exporter
+        {{- with .Values.labels }}
+        {{- toYaml . | nindent 8 }}
+        {{- end }}
+      {{- if .Values.podLabels }}
+        {{- toYaml .Values.podLabels | nindent 8 }}
+      {{- end }}
+    spec:
+      containers:
+        - name: {{ .Values.containerName }}
+        {{- if .Values.imagePullSecrets }}
+          imagePullSecrets: {{ toYaml .Values.imagePullSecrets | nindent 8 }}
+        {{- end }}
+          {{- with .Values.image }}
+          image: "{{- if .repository -}}{{ .repository }}{{ else }}{{ .registry }}/{{ include "nr-exporter.image" . }}{{- end -}}:{{ .tag }}"
+          {{- end }}
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          ports:
+            - name: http
+              containerPort: {{ .Values.service.port }}
+          envFrom:
+            - secretRef:
+                name: {{ include "nr-exporter.fullname" . }}-database
+            - secretRef:
+                name: {{ include "nr-exporter.fullname" . }}
+        {{- if .Values.extraEnvs -}}
+          env:
+          {{- if .Values.extraEnvs }}
+            {{- toYaml .Values.extraEnvs | nindent 12 }}
+          {{- end }}
+        {{- end }}
+        {{- if .Values.resources }}
+          resources:
+            {{- toYaml .Values.resources | nindent 12 }}
+        {{- end }}
+          readinessProbe:
+            httpGet:
+              port: {{ .Values.service.port }}
+              path: /metrics
+          livenessProbe:
+            httpGet:
+              port: {{ .Values.service.port }}
+              path: /metrics
+          volumeMounts:
+            - name: config
+              mountPath: /app/newrelic_exporter.yml
+              subPath: newrelic_exporter.yml
+    {{- if .Values.nodeSelector }}
+      nodeSelector: {{ toYaml .Values.nodeSelector | nindent 8 }}
+    {{- end }}
+    {{- if .Values.tolerations }}
+      tolerations: {{ toYaml .Values.tolerations | nindent 8 }}
+    {{- end }}
+      volumes:
+        - name: config
+          configMap:
+            name: {{ include "nr-exporter.fullname" . }}-config

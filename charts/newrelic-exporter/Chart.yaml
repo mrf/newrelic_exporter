@@ -1,0 +1,9 @@
+apiVersion: v2
+name: newrelic_exporter
+description: NewRelic Exporter
+
+type: application
+
+version: 0.1.0
+
+appVersion: "v1.0.0"
