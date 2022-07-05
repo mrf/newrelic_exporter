@@ -20,6 +20,9 @@ spec:
       app.kubernetes.io/component: nr-exporter
   template:
     metadata:
+      {{- if .Values.podAnnotations }}
+      annotations: {{ toYaml .Values.podAnnotations | nindent 8 }}
+      {{- end }}
       labels:
         {{- include "nr-exporter.selectorLabels" . | nindent 8 }}
         app.kubernetes.io/component: nr-exporter
@@ -43,10 +46,6 @@ spec:
             - name: http
               containerPort: {{ .Values.service.port }}
           envFrom:
-            - secretRef:
-                name: {{ include "nr-exporter.fullname" . }}-database
-            - secretRef:
-                name: {{ include "nr-exporter.fullname" . }}
         {{- if .Values.extraEnvs -}}
           env:
           {{- if .Values.extraEnvs }}

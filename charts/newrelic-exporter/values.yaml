@@ -17,20 +17,20 @@ image:
 service:
   port: "9126"
 
-#- Config definitions
-nr-api-key: ""
-nr-server: "https://api.newrelic.com"
-nr-period: 60
-nr-timeout: 15s
-nr-apps-list-cache-time: 1m
-nr-metric-names-cache-time: ""
-nr-service: "applications"
-nr-include-apps: ""
-nr-include-metric-filters: ""
-nr-include-values: ""
-nr-telemetry-path: "/metrics"
-nr-debug: false
-nr-debug.proxy-address: "https://localhost:8888"
+#- Config definitions, you need to provide NewRelic API Key
+nrApiKey: ""
+nrServer: "https://api.newrelic.com"
+nrPeriod: 60
+nrTimeout: 15s
+nrAppsListCacheTime: 1m
+nrMetricNamesCacheTime: ""
+nrService: "applications"
+nrIncludeApps: ""
+nrIncludeMetricFilters: ""
+nrIncludeValues: ""
+nrTelemetryPath: "/metrics"
+nrDebug: false
+nrDebugProxyAddress: "https://localhost:8888"
 
 #- Extra envs
 extraEnvs: []
@@ -41,17 +41,21 @@ extraEnvs: []
 #         key: FOO
 #         name: secret-resource
 
-#- Labels and Pod Labels
+#- Labels and Annotations Deployment
 labels: {}
 
 commonLabels: {}
 # scmhash: abc123
 # myLabel: aakkmd
 
-podLabels: {}
-
-#- Annotations
 annotations: {}
+
+#- Pod Labels and Annotations
+podLabels: {}
+podAnnotations: {}
+  # prometheus.io/scrape: "true"
+  # prometheus.io/path: "/metrics"
+  # prometheus.io/port: "9126"
 
 #- Resources
 resources:
@@ -64,10 +68,11 @@ resources:
 
 #- Tolerations and NodeSelector
 tolerations: []
-#  - key: "key"
-#    operator: "Equal|Exists"
-#    value: "value"
-#    effect: "NoSchedule|PreferNoSchedule|NoExecute(1.6 only)"
+  # - effect: NoSchedule
+  #   key: key
+  #   operator: Equal
+  #   value: value
 
 nodeSelector: {}
+#  cloud.google.com/gke-nodepool: node-pool-X
 
