@@ -4,9 +4,9 @@ import (
 	"flag"
 	"net/http"
 
-	"github.com/mrf/newrelic_exporter/config"
-	"github.com/mrf/newrelic_exporter/exporter"
-	"github.com/mrf/newrelic_exporter/newrelic"
+	"github.com/klinux/newrelic_exporter/config"
+	"github.com/klinux/newrelic_exporter/exporter"
+	"github.com/klinux/newrelic_exporter/newrelic"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"github.com/prometheus/log"

@@ -4,16 +4,17 @@ import (
 	"crypto/tls"
 	"encoding/json"
 	"fmt"
-	"github.com/antonholmquist/jason"
-	"github.com/mrf/newrelic_exporter/config"
-	"github.com/prometheus/log"
-	"github.com/tomnomnom/linkheader"
 	"io/ioutil"
 	"net/http"
 	"net/url"
 	"strconv"
 	"sync"
 	"time"
+
+	"github.com/antonholmquist/jason"
+	"github.com/klinux/newrelic_exporter/config"
+	"github.com/prometheus/log"
+	"github.com/tomnomnom/linkheader"
 )
 
 // Module version
