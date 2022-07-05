@@ -17,19 +17,19 @@ api.timeout: 15s
 api.service: 
 
 # Time to cache application list. 0 by default
-api.apps-list-cache-time: 1h
+api.apps-list-cache-time: 1m
 
 # Time to cache metric names list. 0 by default
-api.metric-names-cache-time: 1h
+api.metric-names-cache-time: 
 
 # Filter available applications
 api.include-apps:
 
 # List of filters for metric names. Corresponds to 'name' parameter of metrics.json. Each line will generate at least one separate API request so use them wisely.
-# At least one should be present
+# At least one should be present: Ex.: ["WebTransactionTotalTime"]
 api.include-metric-filters:
 
-# List of value names to collect. If empty - all possible values will be collected
+# List of value names to collect. If empty - all possible values will be collected: Ex.: ["requests_per_minute", "standard_deviation", "errors_per_minute"]
 api.include-values:
 
 # Address to listen on for web interface and telemetry. Port defaults to 9126.

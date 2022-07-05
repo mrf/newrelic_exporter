@@ -7,7 +7,7 @@ Requires a New Relic account.
 ### Running in a container
 
     cp newrelic_exporter.yml.example newrelic_exporter.yml
-	docker run klinux/newrelic-exporter
+	docker run -v $PWD/newrelic_exporter.yml:/app/newrelic_exporter.yml klinux/newrelic-exporter
 
 ### From source
 
@@ -34,8 +34,8 @@ api.timeout                 | Period of time to wait for an API response in seco
 api.apps-list-cache-time    | Length of time to cache list of available applications
 api.metric-names-cache-time | Length of time to cache names of metrics (not values)
 api.service                 | Define section of API to limit requests to (applications, mobile, etc)
-api.include-apps            | List of applications to query (optional)
-api.include-metric-filters  | List of metric groups to filter by to reduce number of API calls (required)
+api.include-apps            | List of applications to query (optional). []
+api.include-metric-filters  | List of metric groups to filter by to reduce number of API calls (optional). ["WebTransactionTotalTime", "Errors/allOther"]
 api.include-values          | List of values to filter by to reduce number of API calls (optional)
 web.listen-address          | Address to listen on for web interface and telemetry.  Port defaults to 9126.
 web.telemetry-path          | Path under which to expose metrics.
