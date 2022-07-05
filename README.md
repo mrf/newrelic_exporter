@@ -11,7 +11,7 @@ Requires a New Relic account.
 
 ### From source
 
-	git clone https://github.com/mrf/newrelic_exporter.git --branch release
+	git clone https://github.com/klinux/newrelic_exporter.git --branch release
 	cd newrelic_exporter
     make
     cp newrelic_exporter.yml.example newrelic_exporter.yml
