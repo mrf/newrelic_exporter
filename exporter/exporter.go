@@ -29,7 +29,7 @@ type Exporter struct {
 	api                                      *newrelic.API
 	cfg                                      config.Config
 	apps                                     []newrelic.Application
-	names                                    map[int][]newrelic.MetricName
+	names                                    sync.Map
 	values                                   []string
 	appListLastScrape, metricNamesLastScrape time.Time
 }
@@ -55,7 +55,7 @@ func NewExporter(api *newrelic.API, cfg config.Config) *Exporter {
 		api:     api,
 		cfg:     cfg,
 		apps:    make([]newrelic.Application, 0),
-		names:   make(map[int][]newrelic.MetricName),
+		names:   sync.Map{},
 		values:  make([]string, 0),
 	}
 }
@@ -115,7 +115,7 @@ func (e *Exporter) scrape(from time.Time, to time.Time, ch chan<- Metric) {
 
 				if time.Since(e.metricNamesLastScrape) >= e.cfg.NRAppListCacheTime {
 					names, err = e.api.GetMetricNames(app.ID)
-					e.names[app.ID] = names
+					e.names.Store(app.ID, names)
 					log.Infof("Scraped %v metric names for app %v", len(names), app.ID)
 					if err != nil {
 						log.Error(err)
@@ -132,7 +132,8 @@ func (e *Exporter) scrape(from time.Time, to time.Time, ch chan<- Metric) {
 				// Getting metric data
 				var data []newrelic.MetricData
 
-				data, err = e.api.GetMetricData(app.ID, e.names[app.ID], from, to)
+				name, _ := e.names.Load(app.ID)
+				data, err = e.api.GetMetricData(app.ID, name.([]newrelic.MetricName), from, to)
 				log.Infof("Scraped %v metric datas for app %v", len(data), app.ID)
 				if err != nil {
 					log.Error(err)
