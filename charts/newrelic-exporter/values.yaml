@@ -26,6 +26,7 @@ nrAppsListCacheTime: 1m
 nrMetricNamesCacheTime: ""
 nrService: "applications"
 nrIncludeApps: ""
+nrUseOnlySummary: false
 nrIncludeMetricFilters: ""
 nrIncludeValues: ""
 nrTelemetryPath: "/metrics"

@@ -1,10 +1,11 @@
 package config
 
 import (
-	"github.com/prometheus/log"
-	"gopkg.in/yaml.v2"
 	"io/ioutil"
 	"time"
+
+	"github.com/prometheus/log"
+	"gopkg.in/yaml.v2"
 )
 
 type Config struct {
@@ -17,6 +18,7 @@ type Config struct {
 	NRMetricNamesCacheTime time.Duration `yaml:"api.metric-names-cache-time"`
 	NRService              string        `yaml:"api.service"`
 	NRApps                 []Application `yaml:"api.include-apps"`
+	NRUseOnlySummary       bool          `yaml:"api.use-only-summary"`
 	NRMetricFilters        []string      `yaml:"api.include-metric-filters"`
 	NRValueFilters         []string      `yaml:"api.include-values"`
 

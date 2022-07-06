@@ -14,6 +14,7 @@ data:
     api.apps-list-cache-time: {{ .Values.nrAppsListCacheTime }}
     api.metric-names-cache-time: {{ .Values.nrMetricNamesCacheTime }}
     api.include-apps: {{ .Values.nrIncludeApps }}
+    api.use-only-summary: {{ .Values.nrUseOnlySummary }}
     api.include-metric-filters: {{ .Values.nrIncludeMetricFilters }}
     api.include-values: {{ .Values.nrIncludeValues }}
     web.listen-address: ":{{ .Values.service.port }}"

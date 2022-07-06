@@ -11,7 +11,7 @@ jobs:
       - run: echo "The workflow is now ready to test your code on the runner."
       - name: Build docker image
         run: |
-          docker build -t klinux/newrelic-exporter:1.0.0 .
+          docker build -t klinux/newrelic-exporter:1.0.1 .
       - run: echo "This job's status is ${{ job.status }}."
       - name: Login to Docker Hub
         uses: docker/login-action@v1
@@ -20,7 +20,7 @@ jobs:
           password: ${{ secrets.DOCKER_PASSWORD }}
       - name: Push images
         run: |
-          docker tag klinux/newrelic-exporter:1.0.0 klinux/newrelic-exporter:latest
-          docker push klinux/newrelic-exporter:1.0.0
+          docker tag klinux/newrelic-exporter:1.0.1 klinux/newrelic-exporter:latest
+          docker push klinux/newrelic-exporter:1.0.1
           docker push klinux/newrelic-exporter:latest
       - run: echo "This job's status is ${{ job.status }}."

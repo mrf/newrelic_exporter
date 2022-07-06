@@ -102,65 +102,65 @@ func (e *Exporter) scrape(from time.Time, to time.Time, ch chan<- Metric) {
 		}
 	}
 
-	var wg sync.WaitGroup
+	if e.cfg.NRUseOnlySummary == false {
+		var wg sync.WaitGroup
+		for _, app := range e.apps {
+			wg.Add(1)
 
-	for _, app := range e.apps {
-		wg.Add(1)
+			go func(app newrelic.Application) {
+				defer wg.Done()
 
-		go func(app newrelic.Application) {
-			defer wg.Done()
+				var err error
+				var names []newrelic.MetricName
 
-			var err error
-			var names []newrelic.MetricName
+				if time.Since(e.metricNamesLastScrape) >= e.cfg.NRAppListCacheTime {
+					names, err = e.api.GetMetricNames(app.ID)
+					e.names[app.ID] = names
+					log.Infof("Scraped %v metric names for app %v", len(names), app.ID)
+					if err != nil {
+						log.Error(err)
+						e.error.Set(1)
+					} else {
+						// Only successful tries should touch cache times
+						e.metricNamesLastScrape = time.Now()
+						log.Debugf("Metric names list updated at %v", e.appListLastScrape)
+					}
+				} else {
+					log.Debug("Metrics names list taken from cache")
+				}
 
-			if time.Since(e.metricNamesLastScrape) >= e.cfg.NRAppListCacheTime {
-				names, err = e.api.GetMetricNames(app.ID)
-				e.names[app.ID] = names
-				log.Infof("Scraped %v metric names for app %v", len(names), app.ID)
+				// Getting metric data
+				var data []newrelic.MetricData
+
+				data, err = e.api.GetMetricData(app.ID, e.names[app.ID], from, to)
+				log.Infof("Scraped %v metric datas for app %v", len(data), app.ID)
 				if err != nil {
 					log.Error(err)
 					e.error.Set(1)
-				} else {
-					// Only successful tries should touch cache times
-					e.metricNamesLastScrape = time.Now()
-					log.Debugf("Metric names list updated at %v", e.appListLastScrape)
-				}
-			} else {
-				log.Debug("Metrics names list taken from cache")
-			}
-
-			// Getting metric data
-			var data []newrelic.MetricData
-
-			data, err = e.api.GetMetricData(app.ID, e.names[app.ID], from, to)
-			log.Infof("Scraped %v metric datas for app %v", len(data), app.ID)
-			if err != nil {
-				log.Error(err)
-				e.error.Set(1)
-			}
-
-			// Sending metrics
-			for _, set := range data {
-				if len(set.Timeslices) == 0 {
-					continue
 				}
 
-				// As we set summarise=true there will only be one timeseries.
-				for name, value := range set.Timeslices[0].Values {
-					if v, ok := value.(float64); ok {
-						ch <- Metric{
-							App:   app.Name,
-							Name:  name,
-							Value: v,
-							Label: set.Name,
+				// Sending metrics
+				for _, set := range data {
+					if len(set.Timeslices) == 0 {
+						continue
+					}
+
+					// As we set summarise=true there will only be one timeseries.
+					for name, value := range set.Timeslices[0].Values {
+						if v, ok := value.(float64); ok {
+							ch <- Metric{
+								App:   app.Name,
+								Name:  name,
+								Value: v,
+								Label: set.Name,
+							}
 						}
 					}
 				}
-			}
-		}(app)
+			}(app)
+		}
+		wg.Wait()
 	}
-
-	wg.Wait()
 
 	close(ch)
 
