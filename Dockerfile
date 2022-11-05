@@ -1,14 +1,14 @@
-FROM golang:1.16.3 AS builder
+FROM golang:1.19 AS builder
 
-COPY . /app
+WORKDIR /app
 
-RUN cd /app \
+COPY . .
+
+RUN go mod download \
   && go get -v -d \
   && CGO_ENABLED=0 go build -o newrelic_exporter
 
-FROM alpine:latest
-
-RUN apk --no-cache add ca-certificates
+FROM gcr.io/distroless/static-debian11
 
 WORKDIR /app
 
