@@ -3,9 +3,9 @@ package exporter
 import (
 	"fmt"
 	"github.com/mrf/newrelic_exporter/config"
+	"github.com/mrf/newrelic_exporter/logger"
 	"github.com/mrf/newrelic_exporter/newrelic"
 	"github.com/prometheus/client_golang/prometheus"
-	"github.com/mrf/newrelic_exporter/logger"
 	"sync"
 	"time"
 )

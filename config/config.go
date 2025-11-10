@@ -143,7 +143,6 @@ func (c *Config) ApplyDefaults() {
 	}
 }
 
-
 // Validate checks if the configuration is valid and provides helpful error messages
 func (c *Config) Validate() error {
 	// Check required fields

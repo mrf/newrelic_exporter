@@ -102,8 +102,8 @@ func TestGetApplications(t *testing.T) {
 		response := map[string]interface{}{
 			"applications": []map[string]interface{}{
 				{
-					"id":           testAppID,
-					"name":         "Test Application",
+					"id":            testAppID,
+					"name":          "Test Application",
 					"health_status": "green",
 					"application_summary": map[string]float64{
 						"response_time": 123.45,
@@ -275,8 +275,8 @@ func TestGetMetricData(t *testing.T) {
 						"name": "HttpDispatcher",
 						"timeslices": []map[string]interface{}{
 							{
-								"from":   "2024-01-01T00:00:00Z",
-								"to":     "2024-01-01T00:01:00Z",
+								"from": "2024-01-01T00:00:00Z",
+								"to":   "2024-01-01T00:01:00Z",
 								"values": map[string]interface{}{
 									"average_response_time": 123.45,
 									"call_count":            100.0,
