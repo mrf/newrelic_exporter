@@ -85,11 +85,9 @@ jobs:
           git config user.email "github-actions[bot]@users.noreply.github.com"
 
           # Create or checkout badges branch
-          git fetch origin badges || true
-          git checkout -B badges
-
-          # Copy badge to badges branch
-          cp coverage-badge.svg .
+          git fetch origin badges 2>/dev/null || \
+            git checkout --orphan badges || \
+            git checkout -B badges
 
           # Commit and push
           git add coverage-badge.svg
