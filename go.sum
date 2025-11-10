@@ -1,0 +1,10 @@
+github.com/antonholmquist/jason v1.0.0 h1:QRUDkJTGHmP3H+snmp3zQQSu/vTvJVMHqfJRCmXC4r8=
+github.com/antonholmquist/jason v1.0.0/go.mod h1:UGddcbNTkDdJCsN+Fn6rp8d18NF5kD3a6kBw/rp7KKx=
+github.com/prometheus/client_golang v1.11.1 h1:+4eQaD7vAZ6DsfsxB15hbE0odUjGI5ARs9yskGu1v4s=
+github.com/prometheus/client_golang v1.11.1/go.mod h1:Z6t4BnS7h9icqdc+ST7gDfGbFOmn1kw7JLYQOuYQOW0=
+github.com/prometheus/log v0.0.0-20151026012452-9a3136781e1f h1:z+50dZpRDn8CqI+rK3tSVK4MTRDttL4Zv/11S4EEQZ4=
+github.com/prometheus/log v0.0.0-20151026012452-9a3136781e1f/go.mod h1:vgyd7OREkbtVEN/8IXZe5Ooef3LQePvuBm9UWj6ZL8U=
+github.com/tomnomnom/linkheader v0.0.0-20180220141516-dd9dcf9c3b8b h1:Z9K7ERW+OwFj0h+iMSoG1ePqg1WEVW0WkVZo4b8Kab8=
+github.com/tomnomnom/linkheader v0.0.0-20180220141516-dd9dcf9c3b8b/go.mod h1:ecnwEU9qPt+2wJHWBQXm0HYFE+2Z7g6pSX0/1ygOO9g=
+gopkg.in/yaml.v2 v2.4.0 h1:D8xgwECY7CYvx+Y2n4sBz93Jn9JRvxdiyyo8CTfuKaY=
+gopkg.in/yaml.v2 v2.4.0/go.mod h1:RDklbk79AGWmwhnvt/jBztapEOGDOx6ZbXqjP6csGnQ=
