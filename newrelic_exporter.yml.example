@@ -1,42 +1,313 @@
-# NewRelic API key. Mandatory
-api.key: 
+# ============================================================================
+# New Relic Exporter Configuration
+# ============================================================================
+# This is a comprehensive example configuration file for the New Relic
+# Prometheus Exporter. Copy this file to 'newrelic_exporter.yml' and
+# customize it for your environment.
+#
+# For more information:
+# - New Relic API Explorer: https://rpm.newrelic.com/api/explore
+# - Repository: https://github.com/mrf/newrelic_exporter
+# ============================================================================
 
-# API location
-api.server:	https://api.newrelic.com
+# ----------------------------------------------------------------------------
+# API Authentication (REQUIRED)
+# ----------------------------------------------------------------------------
+# Your New Relic API key. This is REQUIRED for the exporter to work.
+#
+# How to get your API key:
+# 1. Log in to New Relic
+# 2. Go to Account Settings
+# 3. Navigate to API keys section
+# 4. Generate or copy your REST API key
+#
+# IMPORTANT: Keep this key secret! Consider using environment variables
+# or secrets management for production deployments.
+api.key: YOUR_API_KEY_HERE
 
-# Period of data to request, in seconds
+# ----------------------------------------------------------------------------
+# API Server Configuration
+# ----------------------------------------------------------------------------
+# The New Relic API server URL.
+# Default: https://api.newrelic.com
+#
+# For EU accounts, use: https://api.eu.newrelic.com
+api.server: https://api.newrelic.com
+
+# Period of data to request, in seconds.
+# This defines how far back to look for metrics in each scrape.
+# Default: 60
+# Recommended: Match your Prometheus scrape interval
 api.period: 60
 
-# Period of time to wait for an API response
+# Period of time to wait for an API response.
+# Format: Duration with unit (e.g., "15s", "30s", "1m")
+# IMPORTANT: Must include time unit (s, m, h) or the exporter will fail
+# Default: 15s
+# Recommended: 15s-30s depending on your network latency
 api.timeout: 15s
 
-# Name of NewRelic service to acquire metrics from.
-# Mandatory
-# This is part of API path in between of API version and app ID.
-# See NR API docs for details: https://rpm.newrelic.com/api/explore
-api.service: 
+# ----------------------------------------------------------------------------
+# Service Configuration (REQUIRED)
+# ----------------------------------------------------------------------------
+# Name of the New Relic service to acquire metrics from.
+# This is REQUIRED and defines which New Relic API to query.
+#
+# Common values:
+# - "applications" : APM application metrics (most common)
+# - "mobile"       : Mobile application metrics
+# - "servers"      : Server/infrastructure metrics
+# - "plugins"      : Plugin metrics
+# - "key_transactions" : Key transaction metrics
+# - "browser_applications" : Browser application metrics
+#
+# See API Explorer for full list: https://rpm.newrelic.com/api/explore
+api.service: applications
 
-# Time to cache application list. 0 by default
+# ----------------------------------------------------------------------------
+# Caching Configuration (OPTIONAL but RECOMMENDED)
+# ----------------------------------------------------------------------------
+# Time to cache the list of applications.
+# Format: Duration with unit (e.g., "1h", "30m", "24h")
+# Setting this > 0 reduces API calls and improves performance.
+# Default: 0 (no caching)
+# Recommended: 1h or longer if your application list is stable
 api.apps-list-cache-time: 1h
 
-# Time to cache metric names list. 0 by default
+# Time to cache metric names (not the values, just the available metric names).
+# Format: Duration with unit (e.g., "1h", "30m", "24h")
+# Setting this > 0 reduces API calls significantly.
+# Default: 0 (no caching)
+# Recommended: 1h or longer
 api.metric-names-cache-time: 1h
 
-# Filter available applications
+# ----------------------------------------------------------------------------
+# Application Filtering (OPTIONAL)
+# ----------------------------------------------------------------------------
+# Filter which applications to query metrics from.
+# Leave empty to query all applications (can be expensive!).
+#
+# You can filter by:
+# - Application name (string matching)
+# - Application ID (exact match)
+#
+# Examples:
+#   By name:
+#     api.include-apps:
+#       - name: "Production Web App"
+#       - name: "Production API"
+#
+#   By ID:
+#     api.include-apps:
+#       - id: 123456
+#       - id: 789012
+#
+#   Mixed:
+#     api.include-apps:
+#       - name: "Production Web App"
+#       - id: 789012
 api.include-apps:
+  # - name: "My Application"
+  # - id: 123456
 
-# List of filters for metric names. Corresponds to 'name' parameter of metrics.json. Each line will generate at least one separate API request so use them wisely.
-# At least one should be present
+# ----------------------------------------------------------------------------
+# Metric Filtering (REQUIRED)
+# ----------------------------------------------------------------------------
+# List of metric name filters to query from New Relic.
+# At least ONE filter is REQUIRED.
+#
+# IMPORTANT: Each filter generates at least one API request, so use wisely!
+# More filters = more API calls = slower scrapes and higher API usage.
+#
+# These correspond to the 'name' parameter in the New Relic API.
+# Use wildcards or specific metric names.
+#
+# Common metric filters for APM applications:
+# - "HttpDispatcher"         : Web transaction metrics
+# - "Database"               : Database query metrics
+# - "External"               : External service call metrics
+# - "Errors"                 : Error metrics
+# - "Apdex"                  : Application Performance Index
+# - "CPU"                    : CPU usage metrics
+# - "Memory"                 : Memory usage metrics
+# - "WebTransaction"         : Specific web transaction metrics
+# - "Controller"             : Controller/endpoint metrics
+#
+# You can use partial names - New Relic will match any metrics starting with
+# the provided string.
+#
+# Example - Basic monitoring:
 api.include-metric-filters:
+  - "HttpDispatcher"
+  - "Database"
+  - "Apdex"
 
-# List of value names to collect. If empty - all possible values will be collected
+# Example - Comprehensive monitoring (more API calls):
+# api.include-metric-filters:
+#   - "HttpDispatcher"
+#   - "Database"
+#   - "External"
+#   - "Errors"
+#   - "Apdex"
+#   - "Memory"
+#   - "CPU"
+#   - "WebTransaction"
+
+# Example - Focused monitoring (specific endpoints):
+# api.include-metric-filters:
+#   - "Controller/users/show"
+#   - "Controller/orders/create"
+#   - "Database/orders/select"
+
+# ----------------------------------------------------------------------------
+# Value Filtering (OPTIONAL)
+# ----------------------------------------------------------------------------
+# List of specific value names to collect from metrics.
+# Leave empty to collect ALL values (recommended for most use cases).
+#
+# Only use this if you want to reduce metric cardinality or focus on
+# specific measurements.
+#
+# Common values:
+# - "average_response_time"  : Average response time
+# - "call_count"             : Number of calls
+# - "calls_per_minute"       : Rate of calls
+# - "min_response_time"      : Minimum response time
+# - "max_response_time"      : Maximum response time
+# - "average_exclusive_time" : Time spent in this metric only
+# - "average_value"          : Average value
+# - "total_call_time_per_minute" : Total time spent
+# - "requests_per_minute"    : Request rate
+# - "throughput"             : Throughput metric
+# - "error_percentage"       : Error rate
+# - "standard_deviation"     : Standard deviation
+#
+# Example:
+# api.include-values:
+#   - "average_response_time"
+#   - "throughput"
+#   - "error_percentage"
 api.include-values:
 
-# Address to listen on for web interface and telemetry. Port defaults to 9126.
-web.listen-address:	":9126"
+# ----------------------------------------------------------------------------
+# Web Server Configuration
+# ----------------------------------------------------------------------------
+# Address and port to listen on for the metrics HTTP server.
+# Format: ":PORT" or "HOST:PORT"
+# Default: ":9126"
+#
+# The exporter will expose Prometheus metrics at this address.
+web.listen-address: ":9126"
 
-# Path under which to expose metrics. Defaults to '/metrics'
+# HTTP path where metrics will be exposed.
+# Default: "/metrics"
+#
+# Prometheus will scrape this endpoint.
 web.telemetry-path: "/metrics"
 
-# Debugging proxy address
-#debug.proxy-address: "https://localhost:8888"
+# ----------------------------------------------------------------------------
+# Debugging Configuration (OPTIONAL)
+# ----------------------------------------------------------------------------
+# HTTP/HTTPS proxy for debugging API requests.
+# Useful for troubleshooting with tools like Charles Proxy or mitmproxy.
+#
+# Example:
+# debug.proxy-address: "http://localhost:8888"
+#debug.proxy-address: ""
+
+# ============================================================================
+# EXAMPLE CONFIGURATIONS
+# ============================================================================
+
+# Example 1: Basic APM monitoring
+# --------------------------------
+# api.key: YOUR_API_KEY
+# api.service: applications
+# api.timeout: 15s
+# api.include-metric-filters:
+#   - "HttpDispatcher"
+#   - "Apdex"
+
+# Example 2: Multiple applications with detailed metrics
+# -------------------------------------------------------
+# api.key: YOUR_API_KEY
+# api.service: applications
+# api.timeout: 30s
+# api.apps-list-cache-time: 2h
+# api.metric-names-cache-time: 2h
+# api.include-apps:
+#   - name: "Production Web"
+#   - name: "Production API"
+#   - name: "Production Worker"
+# api.include-metric-filters:
+#   - "HttpDispatcher"
+#   - "Database"
+#   - "External"
+#   - "Memory"
+#   - "CPU"
+
+# Example 3: Focused endpoint monitoring
+# ---------------------------------------
+# api.key: YOUR_API_KEY
+# api.service: applications
+# api.include-apps:
+#   - name: "Production API"
+# api.include-metric-filters:
+#   - "Controller/api/v1/users"
+#   - "Controller/api/v1/orders"
+#   - "Controller/api/v1/products"
+# api.include-values:
+#   - "average_response_time"
+#   - "throughput"
+#   - "error_percentage"
+
+# Example 4: Mobile application monitoring
+# -----------------------------------------
+# api.key: YOUR_API_KEY
+# api.service: mobile
+# api.include-apps:
+#   - name: "MyApp iOS"
+#   - name: "MyApp Android"
+# api.include-metric-filters:
+#   - "Mobile"
+#   - "Network"
+
+# ============================================================================
+# TROUBLESHOOTING
+# ============================================================================
+#
+# Common issues and solutions:
+#
+# 1. "Config validation failed: api.timeout is not set"
+#    Solution: Ensure timeout has time units: "15s" not "15"
+#
+# 2. "Config validation failed: api.key is required"
+#    Solution: Set your New Relic API key
+#
+# 3. "Config validation failed: api.service is required"
+#    Solution: Set the service type (usually "applications")
+#
+# 4. "Config validation failed: api.include-metric-filters is required"
+#    Solution: Add at least one metric filter
+#
+# 5. Slow scrapes / timeout errors
+#    Solution: Reduce number of metric filters or increase timeout
+#    Solution: Enable and increase cache times
+#    Solution: Filter to specific applications
+#
+# 6. "unauthorized" or "403" errors
+#    Solution: Verify your API key is correct
+#    Solution: Check API key has necessary permissions
+#
+# 7. No metrics appearing
+#    Solution: Check application names/IDs are correct
+#    Solution: Verify metric filters match available metrics
+#    Solution: Check New Relic API Explorer for valid metric names
+#
+# 8. High API usage
+#    Solution: Increase cache times (apps-list, metric-names)
+#    Solution: Reduce number of metric filters
+#    Solution: Filter to specific applications only
+#    Solution: Increase Prometheus scrape interval
+#
+# ============================================================================
