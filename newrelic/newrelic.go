@@ -7,7 +7,6 @@ import (
 	"github.com/antonholmquist/jason"
 	"github.com/mrf/newrelic_exporter/config"
 	"github.com/mrf/newrelic_exporter/logger"
-	"github.com/tomnomnom/linkheader"
 	"io/ioutil"
 	"net/http"
 	"net/url"
@@ -362,7 +361,7 @@ func (api *API) httpget(req *http.Request, in []byte) (out []byte, err error) {
 	out = append(in, body...)
 
 	// Read the link header to see if we need to read more pages.
-	links := linkheader.Parse(resp.Header.Get("Link"))
+	links := ParseLinkHeader(resp.Header.Get("Link"))
 
 	relLast := links.FilterByRel("last")
 	if len(relLast) > 0 {

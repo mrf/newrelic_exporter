@@ -74,4 +74,4 @@ jobs:
           platforms: linux/amd64,linux/arm64
 
       - name: Image digest
-        run: echo "Image pushed with tags:  ${{ steps.meta.outputs.tags }}"
+        run: echo "Image pushed with tags - ${{ steps.meta.outputs.tags }}"

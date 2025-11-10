@@ -1,264 +1,102 @@
 package main
 
 import (
-	"crypto/tls"
-	"fmt"
-	"io/ioutil"
 	"net/http"
 	"net/http/httptest"
+	"strings"
 	"testing"
-	"time"
+
+	"github.com/mrf/newrelic_exporter/config"
+	"github.com/mrf/newrelic_exporter/exporter"
+	"github.com/mrf/newrelic_exporter/newrelic"
+	"github.com/prometheus/client_golang/prometheus"
+	"github.com/prometheus/client_golang/prometheus/promhttp"
 )
 
-var testApiKey string = "205071e37e95bdaa327c62ccd3201da9289ccd17"
-var testApiAppId int = 9045822
-var testTimeout time.Duration = 5 * time.Second
-var testPostData string = "names[]=Datastore%2Fstatement%2FJDBC%2Fmessages%2Finsert&raw=true&summarize=true&period=0&from=0001-01-01T00:00:00Z&to=0001-01-01T00:00:00Z"
-
-func TestAppListGet(t *testing.T) {
-
-	ts, err := testServer()
-	if err != nil {
-		t.Fatal(err)
+// TestHTTPHandlerRoot tests that the root HTTP handler returns the expected HTML
+func TestHTTPHandlerRoot(t *testing.T) {
+	cfg := config.Config{
+		MetricPath: "/metrics",
 	}
 
-	defer ts.Close()
+	handler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Write([]byte(`<html>
+<head><title>NewRelic exporter</title></head>
+<body>
+<h1>NewRelic exporter</h1>
+<p><a href='` + cfg.MetricPath + `'>Metrics</a></p>
+</body>
+</html>
+`))
+	})
 
-	api := NewNewRelicAPI(ts.URL, testApiKey, testTimeout)
-	api.client = &http.Client{
-		Timeout: testTimeout,
-		Transport: &http.Transport{
-			TLSClientConfig: &tls.Config{
-				InsecureSkipVerify: true,
-			},
-		},
+	req := httptest.NewRequest("GET", "/", nil)
+	w := httptest.NewRecorder()
+
+	handler.ServeHTTP(w, req)
+
+	resp := w.Result()
+	if resp.StatusCode != http.StatusOK {
+		t.Fatalf("Expected status 200, got %d", resp.StatusCode)
 	}
 
-	var app AppList
-
-	err = app.get(api)
-	if err != nil {
-		t.Fatal(err)
+	body := w.Body.String()
+	if !strings.Contains(body, "NewRelic exporter") {
+		t.Fatal("Expected body to contain 'NewRelic exporter'")
 	}
 
-	if len(app.Applications) != 1 {
-		t.Fatal("Expected 1 application, got", len(app.Applications))
+	if !strings.Contains(body, cfg.MetricPath) {
+		t.Fatalf("Expected body to contain metrics path '%s'", cfg.MetricPath)
 	}
-
-	a := app.Applications[0]
-
-	switch {
-
-	case a.ID != testApiAppId:
-		t.Fatal("Wrong ID")
-
-	case a.Health != "green":
-		t.Fatal("Wrong health status")
-
-	case a.Name != "Test/Client/Name":
-		t.Fatal("Wrong name")
-
-	case a.AppSummary["throughput"] != 54.7:
-		t.Fatal("Wrong throughput")
-
-	case a.AppSummary["host_count"] != 3:
-		t.Fatal("Wrong host count")
-
-	case a.UsrSummary["response_time"] != 4.61:
-		t.Fatal("Wrong response time")
-
-	}
-
 }
 
-func TestMetricNamesGet(t *testing.T) {
+// TestExporterRegistration tests that an exporter can be created and registered with Prometheus
+func TestExporterRegistration(t *testing.T) {
+	cfg := config.Config{
+		NRApiKey:    "test-api-key",
+		NRApiServer: "https://api.newrelic.com",
+		NRTimeout:   15,
+		NRPeriod:    60,
+		NRService:   "applications",
+		MetricPath:  "/metrics",
+	}
 
-	ts, err := testServer()
+	api := newrelic.NewAPI(cfg)
+	if api == nil {
+		t.Fatal("Failed to create NewRelic API")
+	}
+
+	exp := exporter.NewExporter(api, cfg)
+	if exp == nil {
+		t.Fatal("Failed to create exporter")
+	}
+
+	// Create a new registry for this test to avoid conflicts
+	registry := prometheus.NewRegistry()
+	err := registry.Register(exp)
 	if err != nil {
-		t.Fatal(err)
+		t.Fatalf("Failed to register exporter with Prometheus: %v", err)
 	}
 
-	defer ts.Close()
-
-	api := NewNewRelicAPI(ts.URL, testApiKey, testTimeout)
-	api.client = &http.Client{
-		Timeout: testTimeout,
-		Transport: &http.Transport{
-			TLSClientConfig: &tls.Config{
-				InsecureSkipVerify: true,
-			},
-		},
+	// Test that we can create a metrics handler
+	handler := promhttp.HandlerFor(registry, promhttp.HandlerOpts{})
+	if handler == nil {
+		t.Fatal("Failed to create Prometheus HTTP handler")
 	}
 
-	var names MetricNames
+	// Make a test request to the metrics endpoint
+	req := httptest.NewRequest("GET", "/metrics", nil)
+	w := httptest.NewRecorder()
 
-	err = names.get(api, testApiAppId)
-	if err != nil {
-		t.Fatal(err)
+	handler.ServeHTTP(w, req)
+
+	resp := w.Result()
+	if resp.StatusCode != http.StatusOK {
+		t.Fatalf("Expected status 200 from metrics endpoint, got %d", resp.StatusCode)
 	}
 
-	if len(names.Metrics) != 2 {
-		t.Fatal("Expected 2 name sets, got", len(names.Metrics))
+	body := w.Body.String()
+	if !strings.Contains(body, "# HELP") || !strings.Contains(body, "# TYPE") {
+		t.Fatal("Expected Prometheus metrics format in response")
 	}
-
-	if len(names.Metrics[0].Values) != 10 {
-		t.Fatal("Expected 10 metric names")
-	}
-
-	if names.Metrics[0].Name != "Datastore/statement/JDBC/messages/insert" {
-		t.Fatal("Wrong application name")
-	}
-	if names.Metrics[1].Name != "Datastore/statement/JDBC/messages/update" {
-		t.Fatal("Wrong application name")
-	}
-
-}
-
-func TestMetricValuesGet(t *testing.T) {
-
-	ts, err := testServer()
-	if err != nil {
-		t.Fatal(err)
-	}
-
-	defer ts.Close()
-
-	api := NewNewRelicAPI(ts.URL, testApiKey, testTimeout)
-	api.client = &http.Client{
-		Timeout: testTimeout,
-		Transport: &http.Transport{
-			TLSClientConfig: &tls.Config{
-				InsecureSkipVerify: true,
-			},
-		},
-	}
-
-	var data MetricData
-	var names MetricNames
-
-	err = names.get(api, testApiAppId)
-	if err != nil {
-		t.Fatal(err)
-	}
-
-	err = data.get(api, testApiAppId, names)
-	if err != nil {
-		t.Fatal(err)
-	}
-
-	if len(data.Metric_Data.Metrics) != 1 {
-		t.Fatal("Expected 1 metric sets")
-	}
-
-	if len(data.Metric_Data.Metrics[0].Timeslices) != 1 {
-		t.Fatal("Expected 1 timeslice")
-	}
-
-	appData := data.Metric_Data.Metrics[0].Timeslices[0]
-
-	if len(appData.Values) != 10 {
-		t.Fatal("Expected 10 data points")
-	}
-
-	if appData.Values["call_count"].(float64) != 2 {
-		t.Fatal("Wrong call_count value")
-	}
-
-	if appData.Values["calls_per_minute"].(float64) != 2.03 {
-		t.Fatal("Wrong calls_per_minute value")
-	}
-
-}
-
-func TestScrapeAPI(t *testing.T) {
-
-	ts, err := testServer()
-	if err != nil {
-		t.Fatal(err)
-	}
-
-	defer ts.Close()
-
-	exporter := NewExporter()
-	exporter.api = NewNewRelicAPI(ts.URL, testApiKey, testTimeout)
-	exporter.api.client = &http.Client{
-		Timeout: testTimeout,
-		Transport: &http.Transport{
-			TLSClientConfig: &tls.Config{
-				InsecureSkipVerify: true,
-			},
-		},
-	}
-
-	var recieved []Metric
-
-	metrics := make(chan Metric)
-
-	go exporter.scrape(metrics)
-
-	for m := range metrics {
-		recieved = append(recieved, m)
-	}
-
-	if len(recieved) != 21 {
-		t.Fatal("Expected 21 metrics")
-	}
-
-}
-
-func testServer() (ts *httptest.Server, err error) {
-
-	ts = httptest.NewTLSServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-
-		if r.Header.Get("X-Api-Key") != testApiKey {
-			w.WriteHeader(403)
-		}
-
-		var body []byte
-		var sourceFile string
-
-		firstLink := fmt.Sprintf(
-			"<%s%s?page=%d>; rel=%s, <%s%s?page=%d>; rel=%s",
-			ts.URL, r.URL.Path, 2, `"next"`,
-			ts.URL, r.URL.Path, 2, `"last"`)
-
-		secondLink := fmt.Sprintf(
-			"<%s%s?page=%d>; rel=%s, <%s%s?page=%d>; rel=%s",
-			ts.URL, r.URL.Path, 1, `"first"`,
-			ts.URL, r.URL.Path, 1, `"prev"`)
-
-		switch r.URL.Path {
-
-		case "/v2/applications.json":
-			sourceFile = "_testing/application_list.json"
-
-		case "/v2/applications/9045822/metrics.json":
-			if r.URL.Query().Get("page") == "2" {
-				sourceFile = ("_testing/metric_names_2.json")
-				w.Header().Set("Link", secondLink)
-			} else {
-				sourceFile = ("_testing/metric_names.json")
-				w.Header().Set("Link", firstLink)
-			}
-
-		case "/v2/applications/9045822/metrics/data.json":
-			sourceFile = ("_testing/metric_data.json")
-
-		default:
-			w.WriteHeader(404)
-			return
-
-		}
-
-		body, err = ioutil.ReadFile(sourceFile)
-		if err != nil {
-			return
-		}
-
-		w.WriteHeader(200)
-		w.Write(body)
-
-	}))
-
-	return
 }

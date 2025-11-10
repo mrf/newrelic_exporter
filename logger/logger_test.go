@@ -81,8 +81,9 @@ func TestTextFormat(t *testing.T) {
 	Info("test message")
 
 	output := buf.String()
-	if !strings.Contains(output, "INFO") {
-		t.Error("Expected text format with INFO level")
+	// logrus text formatter uses lowercase levels and formats like "level=info"
+	if !strings.Contains(output, "level=info") && !strings.Contains(output, "INFO") {
+		t.Errorf("Expected text format with info level, got: %s", output)
 	}
 	if !strings.Contains(output, "test message") {
 		t.Error("Expected text format with message")

@@ -381,7 +381,8 @@ func TestAPIRateLimitHandling(t *testing.T) {
 func TestPaginatedResults(t *testing.T) {
 	callCount := 0
 
-	ts := httptest.NewTLSServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+	var ts *httptest.Server
+	ts = httptest.NewTLSServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		callCount++
 
 		if r.Header.Get("X-Api-Key") != testAPIKey {

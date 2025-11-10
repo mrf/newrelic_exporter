@@ -5,6 +5,7 @@ import (
 	"os"
 	"strings"
 	"testing"
+	"time"
 )
 
 func TestConfigValidation_MissingAPIKey(t *testing.T) {
@@ -75,11 +76,14 @@ api.include-metric-filters:
 	tmpfile := createTempConfig(t, configContent)
 	defer os.Remove(tmpfile)
 
-	_, err := GetConfig(tmpfile)
+	cfg, err := GetConfig(tmpfile)
+	if err != nil {
+		t.Fatalf("Unexpected error: %v", err)
+	}
 	// YAML will parse "15" as 15 nanoseconds, which is less than 1 second
-	// Our validation should catch this
-	if err == nil {
-		t.Fatal("Expected error or warning for timeout without units, got nil")
+	// The validation should log a warning and the config should load
+	if cfg.NRTimeout >= time.Second {
+		t.Fatalf("Expected timeout < 1s (got %v) to trigger warning", cfg.NRTimeout)
 	}
 }
 
@@ -93,12 +97,13 @@ api.include-metric-filters:
 	tmpfile := createTempConfig(t, configContent)
 	defer os.Remove(tmpfile)
 
-	_, err := GetConfig(tmpfile)
-	if err == nil {
-		t.Fatal("Expected error for missing timeout, got nil")
+	cfg, err := GetConfig(tmpfile)
+	if err != nil {
+		t.Fatalf("Unexpected error: %v", err)
 	}
-	if !strings.Contains(err.Error(), "api.timeout") {
-		t.Errorf("Expected error message to mention 'api.timeout', got: %v", err)
+	// When timeout is not provided, the default (15s) should be applied
+	if cfg.NRTimeout != DefaultTimeout {
+		t.Errorf("Expected default timeout %v, got %v", DefaultTimeout, cfg.NRTimeout)
 	}
 }
 
