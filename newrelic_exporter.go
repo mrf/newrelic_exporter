@@ -19,6 +19,9 @@ func main() {
 	flag.Parse()
 
 	cfg, err := config.GetConfig(configFile)
+	if err != nil {
+		log.Fatalf("Error loading config file '%s': %v", configFile, err)
+	}
 
 	api := newrelic.NewAPI(cfg)
 
