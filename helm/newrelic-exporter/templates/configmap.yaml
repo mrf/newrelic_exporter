@@ -1,0 +1,62 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ include "newrelic-exporter.fullname" . }}
+  labels:
+    {{- include "newrelic-exporter.labels" . | nindent 4 }}
+data:
+  newrelic_exporter.yml: |
+    # API location
+    api.server: {{ .Values.newrelic.server }}
+
+    # Period of data to request, in seconds
+    api.period: {{ .Values.newrelic.period }}
+
+    # Period of time to wait for an API response
+    api.timeout: {{ .Values.newrelic.timeout }}
+
+    {{- if .Values.newrelic.service }}
+    # Name of NewRelic service to acquire metrics from
+    api.service: {{ .Values.newrelic.service }}
+    {{- end }}
+
+    # Time to cache application list
+    api.apps-list-cache-time: {{ .Values.newrelic.appsListCacheTime }}
+
+    # Time to cache metric names list
+    api.metric-names-cache-time: {{ .Values.newrelic.metricNamesCacheTime }}
+
+    {{- if .Values.newrelic.includeApps }}
+    # Filter available applications
+    api.include-apps:
+    {{- range .Values.newrelic.includeApps }}
+      - {{ . }}
+    {{- end }}
+    {{- end }}
+
+    {{- if .Values.newrelic.includeMetricFilters }}
+    # List of filters for metric names
+    api.include-metric-filters:
+    {{- range .Values.newrelic.includeMetricFilters }}
+      - {{ . }}
+    {{- end }}
+    {{- end }}
+
+    {{- if .Values.newrelic.includeValues }}
+    # List of value names to collect
+    api.include-values:
+    {{- range .Values.newrelic.includeValues }}
+      - {{ . }}
+    {{- end }}
+    {{- end }}
+
+    # Address to listen on for web interface and telemetry
+    web.listen-address: {{ .Values.web.listenAddress | quote }}
+
+    # Path under which to expose metrics
+    web.telemetry-path: {{ .Values.web.telemetryPath | quote }}
+
+    {{- if .Values.debug.proxyAddress }}
+    # Debugging proxy address
+    debug.proxy-address: {{ .Values.debug.proxyAddress | quote }}
+    {{- end }}

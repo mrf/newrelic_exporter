@@ -26,3 +26,11 @@ _testmain.go
 
 newrelic_exporter
 newrelic_exporter.yml
+
+# Go modules
+vendor/
+
+# Test coverage
+coverage.out
+coverage.html
+*.coverprofile

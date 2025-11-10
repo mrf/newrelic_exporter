@@ -1,0 +1,40 @@
+1. Get the application URL by running these commands:
+{{- if contains "NodePort" .Values.service.type }}
+  export NODE_PORT=$(kubectl get --namespace {{ .Release.Namespace }} -o jsonpath="{.spec.ports[0].nodePort}" services {{ include "newrelic-exporter.fullname" . }})
+  export NODE_IP=$(kubectl get nodes --namespace {{ .Release.Namespace }} -o jsonpath="{.items[0].status.addresses[0].address}")
+  echo http://$NODE_IP:$NODE_PORT
+{{- else if contains "LoadBalancer" .Values.service.type }}
+     NOTE: It may take a few minutes for the LoadBalancer IP to be available.
+           You can watch the status of by running 'kubectl get --namespace {{ .Release.Namespace }} svc -w {{ include "newrelic-exporter.fullname" . }}'
+  export SERVICE_IP=$(kubectl get svc --namespace {{ .Release.Namespace }} {{ include "newrelic-exporter.fullname" . }} --template "{{"{{ range (index .status.loadBalancer.ingress 0) }}{{.}}{{ end }}"}}")
+  echo http://$SERVICE_IP:{{ .Values.service.port }}
+{{- else if contains "ClusterIP" .Values.service.type }}
+  export POD_NAME=$(kubectl get pods --namespace {{ .Release.Namespace }} -l "app.kubernetes.io/name={{ include "newrelic-exporter.name" . }},app.kubernetes.io/instance={{ .Release.Name }}" -o jsonpath="{.items[0].metadata.name}")
+  export CONTAINER_PORT=$(kubectl get pod --namespace {{ .Release.Namespace }} $POD_NAME -o jsonpath="{.spec.containers[0].ports[0].containerPort}")
+  echo "Visit http://127.0.0.1:9126 to access the metrics endpoint"
+  kubectl --namespace {{ .Release.Namespace }} port-forward $POD_NAME 9126:$CONTAINER_PORT
+{{- end }}
+
+2. The exporter is configured to scrape metrics from New Relic API.
+   Metrics are exposed at: {{ .Values.web.telemetryPath }}
+
+3. Configure Prometheus to scrape this exporter by adding the following to your prometheus.yml:
+
+   scrape_configs:
+     - job_name: 'newrelic-exporter'
+       static_configs:
+         - targets: ['{{ include "newrelic-exporter.fullname" . }}.{{ .Release.Namespace }}.svc.cluster.local:{{ .Values.service.port }}']
+
+{{- if not .Values.newrelic.apiKey }}
+{{- if not .Values.newrelic.existingSecret }}
+
+WARNING: No API key has been configured!
+Please update the deployment with your New Relic API key:
+
+  helm upgrade {{ .Release.Name }} {{ .Chart.Name }} \
+    --set newrelic.apiKey=YOUR_API_KEY \
+    --set newrelic.service=applications \
+    --set newrelic.includeMetricFilters[0]="your-metric-filter"
+
+{{- end }}
+{{- end }}
