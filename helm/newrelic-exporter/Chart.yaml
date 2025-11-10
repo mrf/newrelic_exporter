@@ -1,0 +1,16 @@
+apiVersion: v2
+name: newrelic-exporter
+description: A Helm chart for New Relic Prometheus Exporter
+type: application
+version: 1.0.0
+appVersion: "1.0.0"
+keywords:
+  - newrelic
+  - prometheus
+  - exporter
+  - monitoring
+home: https://github.com/mrf/newrelic_exporter
+sources:
+  - https://github.com/mrf/newrelic_exporter
+maintainers:
+  - name: mrf

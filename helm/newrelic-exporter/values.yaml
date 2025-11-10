@@ -1,0 +1,107 @@
+# Default values for newrelic-exporter.
+# This is a YAML-formatted file.
+# Declare variables to be passed into your templates.
+
+replicaCount: 1
+
+image:
+  repository: ghcr.io/mrf/newrelic-exporter
+  pullPolicy: IfNotPresent
+  # Overrides the image tag whose default is the chart appVersion.
+  tag: ""
+
+imagePullSecrets: []
+nameOverride: ""
+fullnameOverride: ""
+
+serviceAccount:
+  # Specifies whether a service account should be created
+  create: true
+  # Annotations to add to the service account
+  annotations: {}
+  # The name of the service account to use.
+  # If not set and create is true, a name is generated using the fullname template
+  name: ""
+
+podAnnotations:
+  prometheus.io/scrape: "true"
+  prometheus.io/port: "9126"
+  prometheus.io/path: "/metrics"
+
+podSecurityContext: {}
+  # fsGroup: 2000
+
+securityContext: {}
+  # capabilities:
+  #   drop:
+  #   - ALL
+  # readOnlyRootFilesystem: true
+  # runAsNonRoot: true
+  # runAsUser: 1000
+
+service:
+  type: ClusterIP
+  port: 9126
+  targetPort: 9126
+  annotations: {}
+
+# New Relic API configuration
+newrelic:
+  # API key (required) - can be set via existingSecret
+  apiKey: ""
+
+  # Use an existing secret for API key
+  # The secret should have a key named 'api-key'
+  existingSecret: ""
+
+  # API server URL
+  server: "https://api.newrelic.com"
+
+  # Period of data to request, in seconds
+  period: 60
+
+  # API timeout
+  timeout: "15s"
+
+  # New Relic service to query (applications, mobile, etc)
+  service: ""
+
+  # Cache times
+  appsListCacheTime: "1h"
+  metricNamesCacheTime: "1h"
+
+  # Filter available applications (optional)
+  includeApps: []
+
+  # Metric filters (required) - at least one should be present
+  includeMetricFilters: []
+
+  # Value filters (optional)
+  includeValues: []
+
+# Web server configuration
+web:
+  listenAddress: ":9126"
+  telemetryPath: "/metrics"
+
+# Debug configuration
+debug:
+  proxyAddress: ""
+
+resources: {}
+  # We usually recommend not to specify default resources and to leave this as a conscious
+  # choice for the user. This also increases chances charts run on environments with little
+  # resources, such as Minikube. If you do want to specify resources, uncomment the following
+  # lines, adjust them as necessary, and remove the curly braces after 'resources:'.
+  # limits:
+  #   cpu: 100m
+  #   memory: 128Mi
+  # requests:
+  #   cpu: 100m
+  #   memory: 128Mi
+
+nodeSelector: {}
+
+tolerations: []
+
+affinity: {}
