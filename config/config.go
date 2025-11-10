@@ -1,7 +1,7 @@
 package config
 
 import (
-	"github.com/prometheus/log"
+	"github.com/mrf/newrelic_exporter/logger"
 	"gopkg.in/yaml.v2"
 	"io/ioutil"
 	"time"
@@ -45,7 +45,7 @@ func GetConfig(path string) (Config, error) {
 		return config, err
 	}
 
-	log.Debugf("Config loaded: %v", config)
+	logger.Debugf("Config loaded: %v", config)
 
 	return config, err
 }

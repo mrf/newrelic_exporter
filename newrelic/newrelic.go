@@ -6,7 +6,7 @@ import (
 	"fmt"
 	"github.com/antonholmquist/jason"
 	"github.com/mrf/newrelic_exporter/config"
-	"github.com/prometheus/log"
+	"github.com/mrf/newrelic_exporter/logger"
 	"github.com/tomnomnom/linkheader"
 	"io/ioutil"
 	"net/http"
@@ -61,13 +61,13 @@ func NewAPI(c config.Config) *API {
 
 	serverURL, err := url.Parse(cfg.NRApiServer)
 	if err != nil {
-		log.Fatal("Could not parse API URL: ", err)
+		logger.Fatal("Could not parse API URL: ", err)
 	}
 	if cfg.NRApiKey == "" {
-		log.Fatal("Cannot continue without an API key.")
+		logger.Fatal("Cannot continue without an API key.")
 	}
 	if cfg.NRService == "" {
-		log.Fatal("Cannot continue without NewRelic service selected")
+		logger.Fatal("Cannot continue without NewRelic service selected")
 	}
 
 	client := &http.Client{Timeout: cfg.NRTimeout}
@@ -90,11 +90,11 @@ func NewAPI(c config.Config) *API {
 }
 
 func (api *API) GetApplications() ([]Application, error) {
-	log.Infof("Requesting application list from %s.", api.server.String())
+	logger.Infof("Requesting application list from %s.", api.server.String())
 
 	body, err := api.req(fmt.Sprintf("/v2/%s.json", api.service), "")
 	if err != nil {
-		log.Error("Error getting application list: ", err)
+		logger.Error("Error getting application list: ", err)
 		return nil, err
 	}
 
@@ -115,14 +115,14 @@ func (api *API) GetApplications() ([]Application, error) {
 			}
 		}
 
-		log.Debugf("Found %v applications: %v", len(applications), applications)
+		logger.Debugf("Found %v applications: %v", len(applications), applications)
 	}
 
 	return applications, err
 }
 
 func (api *API) GetMetricNames(appID int) ([]MetricName, error) {
-	log.Infof("Requesting metrics names for application id %d with %v filters", appID, len(cfg.NRMetricFilters))
+	logger.Infof("Requesting metrics names for application id %d with %v filters", appID, len(cfg.NRMetricFilters))
 	path := fmt.Sprintf("/v2/%s/%s/metrics.json", api.service, strconv.Itoa(appID))
 
 	channel := make(chan MetricName)
@@ -134,7 +134,7 @@ func (api *API) GetMetricNames(appID int) ([]MetricName, error) {
 		var wg sync.WaitGroup
 
 		for _, filter = range cfg.NRMetricFilters {
-			log.Debugf("Scraping filter %v for app %v", filter, appID)
+			logger.Debugf("Scraping filter %v for app %v", filter, appID)
 
 			wg.Add(1)
 
@@ -146,19 +146,19 @@ func (api *API) GetMetricNames(appID int) ([]MetricName, error) {
 
 				body, err := api.req(path, params.Encode())
 				if err != nil {
-					log.Error("Error getting metric names:", err)
+					logger.Error("Error getting metric names:", err)
 					return err
 				}
 
 				v, err := jason.NewObjectFromBytes(body)
 				if err != nil {
-					log.Error("Error parsing metric names from JSON:", err)
+					logger.Error("Error parsing metric names from JSON:", err)
 					return err
 				}
 
 				metricsArray, err := v.GetObjectArray("metrics")
 				if err != nil {
-					log.Error("Error parsing metric names from JSON:", err)
+					logger.Error("Error parsing metric names from JSON:", err)
 					return err
 				}
 
@@ -167,20 +167,20 @@ func (api *API) GetMetricNames(appID int) ([]MetricName, error) {
 
 					mnBytes, err := mn.Marshal()
 					if err != nil {
-						log.Error("Error marshalling metric to JSON object:", err)
+						logger.Error("Error marshalling metric to JSON object:", err)
 						return err
 					}
 
 					err = json.Unmarshal(mnBytes, metric)
 					if err != nil {
-						log.Error("Error unmarshalling metric from JSON object:", err)
+						logger.Error("Error unmarshalling metric from JSON object:", err)
 						return err
 					}
 
 					ch <- *metric
 				}
 
-				log.Debugf("Found %v possible metric names for app %v and filter %v", len(metricsArray), appID, filter)
+				logger.Debugf("Found %v possible metric names for app %v and filter %v", len(metricsArray), appID, filter)
 
 				return nil
 			}(filter)
@@ -263,20 +263,20 @@ func (api *API) GetMetricData(appId int, names []MetricName, from time.Time, to 
 
 				body, err := api.req(path, params.Encode())
 				if err != nil {
-					log.Error("Error requesting metrics: ", err)
+					logger.Error("Error requesting metrics: ", err)
 					return err
 				}
 
 				v, err := jason.NewObjectFromBytes(body)
 				if err != nil {
-					log.Error("Error parsing metric names from JSON:", err)
+					logger.Error("Error parsing metric names from JSON:", err)
 					return err
 				}
 
 				metricsData, err := v.GetObject("metric_data")
 				metricsArray, err := metricsData.GetObjectArray("metrics")
 				if err != nil {
-					log.Error("Error parsing metric names from JSON:", err)
+					logger.Error("Error parsing metric names from JSON:", err)
 					return err
 				}
 
@@ -285,13 +285,13 @@ func (api *API) GetMetricData(appId int, names []MetricName, from time.Time, to 
 
 					mdBytes, err := md.Marshal()
 					if err != nil {
-						log.Error("Error marshalling metric to JSON object:", err)
+						logger.Error("Error marshalling metric to JSON object:", err)
 						return err
 					}
 
 					err = json.Unmarshal(mdBytes, metric)
 					if err != nil {
-						log.Error("Error unmarshalling metric from JSON object:", err)
+						logger.Error("Error unmarshalling metric from JSON object:", err)
 						return err
 					}
 					ch <- *metric
@@ -323,7 +323,7 @@ func (api *API) req(path string, params string) ([]byte, error) {
 	}
 	u.RawQuery = params
 
-	//log.Debug("Making API call: ", u.String())
+	//logger.Debug("Making API call: ", u.String())
 
 	req := &http.Request{
 		Method: "GET",
@@ -351,10 +351,10 @@ func (api *API) httpget(req *http.Request, in []byte) (out []byte, err error) {
 	}
 
 	if resp.StatusCode == 429 {
-		log.Info("API Limit Exceeded, New Relic Returning 429 see: https://docs.newrelic.com/docs/apis/rest-api-v2/requirements/api-overload-protection-handling-429-errors")
+		logger.Info("API Limit Exceeded, New Relic Returning 429 see: https://docs.newrelic.com/docs/apis/rest-api-v2/requirements/api-overload-protection-handling-429-errors")
 		overload_header := resp.Header["Newrelic-Overloadprotection-Reset"][0]
 		overload_time, _ := strconv.ParseInt(overload_header, 10, 64)
-		log.Info("Overload protection resets at: ", time.Unix(overload_time, 0))
+		logger.Info("Overload protection resets at: ", time.Unix(overload_time, 0))
 		return
 	}
 
@@ -368,9 +368,9 @@ func (api *API) httpget(req *http.Request, in []byte) (out []byte, err error) {
 	if len(relLast) > 0 {
 		u, err := url.Parse(relLast[0].URL)
 		if err != nil {
-			log.Errorf("Error parsing 'last' relation link. %v", err)
+			logger.Errorf("Error parsing 'last' relation link. %v", err)
 		}
-		log.Debugf("Found %v pages for %s", u.Query().Get("page"), req.URL)
+		logger.Debugf("Found %v pages for %s", u.Query().Get("page"), req.URL)
 	}
 
 	relNext := links.FilterByRel("next")

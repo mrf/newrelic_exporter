@@ -6,19 +6,34 @@ import (
 
 	"github.com/mrf/newrelic_exporter/config"
 	"github.com/mrf/newrelic_exporter/exporter"
+	"github.com/mrf/newrelic_exporter/logger"
 	"github.com/mrf/newrelic_exporter/newrelic"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
-	"github.com/prometheus/log"
 )
 
 func main() {
 	var configFile string
+	var logLevel string
+	var logJSON bool
 
-	flag.StringVar(&configFile, "config", "newrelic_exporter.yml", "Config file path. Defaults to 'newrelic_exporter.yml'")
+	flag.StringVar(&configFile, "config", "newrelic_exporter.yml", "Config file path")
+	flag.StringVar(&logLevel, "log.level", "info", "Log level (debug, info, warn, error)")
+	flag.BoolVar(&logJSON, "log.json", false, "Output logs in JSON format")
 	flag.Parse()
 
+	// Setup logging
+	logger.Setup(logger.Config{
+		Level:      logger.LogLevel(logLevel),
+		JSONFormat: logJSON,
+	})
+
 	cfg, err := config.GetConfig(configFile)
+	if err != nil {
+		logger.Fatalf("Error loading config file '%s': %v", configFile, err)
+	}
+
+	logger.Infof("Configuration loaded successfully from %s", configFile)
 
 	api := newrelic.NewAPI(cfg)
 
@@ -38,10 +53,10 @@ func main() {
 `))
 	})
 
-	log.Printf("Listening on %s.", cfg.ListenAddress)
+	logger.Infof("Listening on %s", cfg.ListenAddress)
 	err = http.ListenAndServe(cfg.ListenAddress, nil)
 	if err != nil {
-		log.Fatal(err)
+		logger.Fatal(err)
 	}
-	log.Print("HTTP server stopped.")
+	logger.Info("HTTP server stopped")
 }

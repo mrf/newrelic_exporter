@@ -5,7 +5,7 @@ import (
 	"github.com/mrf/newrelic_exporter/config"
 	"github.com/mrf/newrelic_exporter/newrelic"
 	"github.com/prometheus/client_golang/prometheus"
-	"github.com/prometheus/log"
+	"github.com/mrf/newrelic_exporter/logger"
 	"sync"
 	"time"
 )
@@ -64,21 +64,21 @@ func (e *Exporter) scrape(from time.Time, to time.Time, ch chan<- Metric) {
 	e.totalScrapes.Inc()
 
 	startTime := time.Now()
-	log.Infof("Starting new scrape at %v for period from %v to %v.", startTime, from.Format(time.Stamp), to.Format(time.Stamp))
+	logger.Infof("Starting new scrape at %v for period from %v to %v.", startTime, from.Format(time.Stamp), to.Format(time.Stamp))
 
 	if time.Since(e.appListLastScrape) >= e.cfg.NRAppListCacheTime {
 		var err error
 		e.apps, err = e.api.GetApplications()
 		if err != nil {
-			log.Error(err)
+			logger.Error(err)
 			e.error.Set(1)
 		} else {
 			// Only successful tries should touch cache times
 			e.appListLastScrape = time.Now()
-			log.Debugf("Application list updated at %v", e.appListLastScrape)
+			logger.Debugf("Application list updated at %v", e.appListLastScrape)
 		}
 	} else {
-		log.Debug("Applications list taken from cache")
+		logger.Debug("Applications list taken from cache")
 	}
 
 	for _, app := range e.apps {
@@ -115,26 +115,26 @@ func (e *Exporter) scrape(from time.Time, to time.Time, ch chan<- Metric) {
 			if time.Since(e.metricNamesLastScrape) >= e.cfg.NRAppListCacheTime {
 				names, err = e.api.GetMetricNames(app.ID)
 				e.names[app.ID] = names
-				log.Infof("Scraped %v metric names for app %v", len(names), app.ID)
+				logger.Infof("Scraped %v metric names for app %v", len(names), app.ID)
 				if err != nil {
-					log.Error(err)
+					logger.Error(err)
 					e.error.Set(1)
 				} else {
 					// Only successful tries should touch cache times
 					e.metricNamesLastScrape = time.Now()
-					log.Debugf("Metric names list updated at %v", e.appListLastScrape)
+					logger.Debugf("Metric names list updated at %v", e.appListLastScrape)
 				}
 			} else {
-				log.Debug("Metrics names list taken from cache")
+				logger.Debug("Metrics names list taken from cache")
 			}
 
 			// Getting metric data
 			var data []newrelic.MetricData
 
 			data, err = e.api.GetMetricData(app.ID, e.names[app.ID], from, to)
-			log.Infof("Scraped %v metric datas for app %v", len(data), app.ID)
+			logger.Infof("Scraped %v metric datas for app %v", len(data), app.ID)
 			if err != nil {
-				log.Error(err)
+				logger.Error(err)
 				e.error.Set(1)
 			}
 
@@ -164,7 +164,7 @@ func (e *Exporter) scrape(from time.Time, to time.Time, ch chan<- Metric) {
 	close(ch)
 
 	e.duration.Set(float64(time.Now().UnixNano()-startTime.UnixNano()) / 1000000000)
-	log.Infof("Scrape finished in %v", time.Since(startTime))
+	logger.Infof("Scrape finished in %v", time.Since(startTime))
 }
 
 func (e *Exporter) receive(ch <-chan Metric) {
