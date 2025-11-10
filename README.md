@@ -1,10 +1,11 @@
 # New Relic Exporter
 
-[![Docker Pulls](https://img.shields.io/docker/pulls/mrf/newrelic-exporter)](https://hub.docker.com/r/mrf/newrelic-exporter)
+[![GitHub Container Registry](https://img.shields.io/badge/ghcr.io-mrf%2Fnewrelic--exporter-blue)](https://github.com/mrf/newrelic_exporter/pkgs/container/newrelic-exporter)
 [![GitHub issues](https://img.shields.io/github/issues/mrf/newrelic_exporter)](https://github.com/mrf/newrelic_exporter/issues)
 [![GitHub pull requests](https://img.shields.io/github/issues-pr/mrf/newrelic_exporter)](https://github.com/mrf/newrelic_exporter/pulls)
 [![License](https://img.shields.io/github/license/mrf/newrelic_exporter)](LICENSE)
 [![Go Report Card](https://goreportcard.com/badge/github.com/mrf/newrelic_exporter)](https://goreportcard.com/report/github.com/mrf/newrelic_exporter)
+[![Coverage](https://raw.githubusercontent.com/mrf/newrelic_exporter/badges/coverage-badge.svg)](https://github.com/mrf/newrelic_exporter/actions)
 
 Prometheus exporter for New Relic data. This exporter allows you to collect metrics from New Relic's API and expose them in Prometheus format.
 
@@ -41,7 +42,7 @@ We welcome:
 
 ```bash
 # Pull the latest image
-docker pull mrf/newrelic-exporter:latest
+docker pull ghcr.io/mrf/newrelic-exporter:latest
 
 # Create a configuration file
 cat > newrelic_exporter.yml <<EOF
@@ -58,7 +59,7 @@ EOF
 docker run -d \
   -p 9126:9126 \
   -v $(pwd)/newrelic_exporter.yml:/app/newrelic_exporter.yml \
-  mrf/newrelic-exporter:latest
+  ghcr.io/mrf/newrelic-exporter:latest
 ```
 
 ### Using Kubernetes/Helm
@@ -80,7 +81,7 @@ See the [Helm chart README](helm/newrelic-exporter/README.md) for detailed confi
 ```bash
 cp newrelic_exporter.yml.example newrelic_exporter.yml
 # Edit newrelic_exporter.yml with your API key and settings
-docker run -v $(pwd)/newrelic_exporter.yml:/app/newrelic_exporter.yml mrf/newrelic-exporter
+docker run -v $(pwd)/newrelic_exporter.yml:/app/newrelic_exporter.yml ghcr.io/mrf/newrelic-exporter
 ```
 
 ### From source
@@ -192,7 +193,7 @@ go build -o newrelic_exporter .
 ### Docker Build
 
 ```bash
-docker build -t mrf/newrelic-exporter:latest .
+docker build -t ghcr.io/mrf/newrelic-exporter:latest .
 ```
 
 ## CI/CD

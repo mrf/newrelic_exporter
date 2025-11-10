@@ -34,7 +34,7 @@ The following table lists the configurable parameters of the New Relic Exporter 
 | Parameter | Description | Default |
 |-----------|-------------|---------|
 | `replicaCount` | Number of replicas | `1` |
-| `image.repository` | Image repository | `mrf/newrelic-exporter` |
+| `image.repository` | Image repository | `ghcr.io/mrf/newrelic-exporter` |
 | `image.pullPolicy` | Image pull policy | `IfNotPresent` |
 | `image.tag` | Image tag | `""` (uses appVersion) |
 | `serviceAccount.create` | Create service account | `true` |
