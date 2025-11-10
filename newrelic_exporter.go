@@ -14,14 +14,37 @@ import (
 
 func main() {
 	var configFile string
+	var printDefaults bool
+	var generateConfig string
 
-	flag.StringVar(&configFile, "config", "newrelic_exporter.yml", "Config file path. Defaults to 'newrelic_exporter.yml'")
+	flag.StringVar(&configFile, "config", "newrelic_exporter.yml", "Config file path")
+	flag.BoolVar(&printDefaults, "print-defaults", false, "Print default configuration values and exit")
+	flag.StringVar(&generateConfig, "generate-config", "", "Generate a default configuration file at the specified path and exit")
 	flag.Parse()
 
+	// Handle utility flags
+	if printDefaults {
+		config.PrintDefaults()
+		return
+	}
+
+	if generateConfig != "" {
+		err := config.WriteDefaultConfig(generateConfig)
+		if err != nil {
+			log.Fatalf("Failed to generate config: %v", err)
+		}
+		log.Infof("Default configuration written to: %s", generateConfig)
+		log.Info("Please edit the file to set your API key and other required fields")
+		return
+	}
+
+	// Load configuration with defaults
 	cfg, err := config.GetConfig(configFile)
 	if err != nil {
 		log.Fatalf("Error loading config file '%s': %v", configFile, err)
 	}
+
+	log.Infof("Configuration loaded successfully from %s", configFile)
 
 	api := newrelic.NewAPI(cfg)
 
