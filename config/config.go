@@ -2,7 +2,7 @@ package config
 
 import (
 	"fmt"
-	"github.com/prometheus/log"
+	"github.com/mrf/newrelic_exporter/logger"
 	"gopkg.in/yaml.v2"
 	"io/ioutil"
 	"os"
@@ -71,7 +71,7 @@ func GetConfig(path string) (Config, error) {
 		return config, fmt.Errorf("config validation failed: %w", err)
 	}
 
-	log.Debugf("Config loaded successfully with defaults applied: %v", config)
+	logger.Debugf("Config loaded successfully with defaults applied: %v", config)
 
 	return config, nil
 }
@@ -96,37 +96,37 @@ func NewDefaultConfig() Config {
 func (c *Config) ApplyDefaults() {
 	if c.NRApiServer == "" {
 		c.NRApiServer = DefaultAPIServer
-		log.Debugf("Applied default API server: %s", DefaultAPIServer)
+		logger.Debugf("Applied default API server: %s", DefaultAPIServer)
 	}
 
 	if c.NRPeriod == 0 {
 		c.NRPeriod = DefaultPeriod
-		log.Debugf("Applied default period: %d seconds", DefaultPeriod)
+		logger.Debugf("Applied default period: %d seconds", DefaultPeriod)
 	}
 
 	if c.NRTimeout == 0 {
 		c.NRTimeout = DefaultTimeout
-		log.Debugf("Applied default timeout: %v", DefaultTimeout)
+		logger.Debugf("Applied default timeout: %v", DefaultTimeout)
 	}
 
 	if c.NRAppListCacheTime == 0 {
 		c.NRAppListCacheTime = DefaultAppListCacheTime
-		log.Debugf("Applied default app list cache time: %v", DefaultAppListCacheTime)
+		logger.Debugf("Applied default app list cache time: %v", DefaultAppListCacheTime)
 	}
 
 	if c.NRMetricNamesCacheTime == 0 {
 		c.NRMetricNamesCacheTime = DefaultMetricNamesCacheTime
-		log.Debugf("Applied default metric names cache time: %v", DefaultMetricNamesCacheTime)
+		logger.Debugf("Applied default metric names cache time: %v", DefaultMetricNamesCacheTime)
 	}
 
 	if c.ListenAddress == "" {
 		c.ListenAddress = DefaultListenAddress
-		log.Debugf("Applied default listen address: %s", DefaultListenAddress)
+		logger.Debugf("Applied default listen address: %s", DefaultListenAddress)
 	}
 
 	if c.MetricPath == "" {
 		c.MetricPath = DefaultMetricPath
-		log.Debugf("Applied default metric path: %s", DefaultMetricPath)
+		logger.Debugf("Applied default metric path: %s", DefaultMetricPath)
 	}
 
 	// Initialize empty slices if nil
@@ -161,7 +161,7 @@ func (c *Config) Validate() error {
 
 	// Warn about potentially incorrect duration values
 	if c.NRTimeout < time.Second {
-		log.Warnf("api.timeout is set to %v which is less than 1 second - this may be too short for API requests", c.NRTimeout)
+		logger.Warnf("api.timeout is set to %v which is less than 1 second - this may be too short for API requests", c.NRTimeout)
 	}
 
 	return nil
@@ -228,7 +228,7 @@ web.telemetry-path: "/metrics"
 		return fmt.Errorf("failed to write default config: %w", err)
 	}
 
-	log.Infof("Default configuration written to: %s", path)
+	logger.Infof("Default configuration written to: %s", path)
 	return nil
 }
 
@@ -251,7 +251,7 @@ func PrintDefaults() {
 // GetConfigOrDefault attempts to load config from file, or returns defaults if file doesn't exist
 func GetConfigOrDefault(path string) (Config, error) {
 	if _, err := os.Stat(path); os.IsNotExist(err) {
-		log.Warnf("Config file not found at %s, using defaults", path)
+		logger.Warnf("Config file not found at %s, using defaults", path)
 		config := NewDefaultConfig()
 		config.ApplyDefaults()
 		return config, nil

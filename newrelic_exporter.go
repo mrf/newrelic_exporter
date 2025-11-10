@@ -6,21 +6,31 @@ import (
 
 	"github.com/mrf/newrelic_exporter/config"
 	"github.com/mrf/newrelic_exporter/exporter"
+	"github.com/mrf/newrelic_exporter/logger"
 	"github.com/mrf/newrelic_exporter/newrelic"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
-	"github.com/prometheus/log"
 )
 
 func main() {
 	var configFile string
+	var logLevel string
+	var logJSON bool
 	var printDefaults bool
 	var generateConfig string
 
 	flag.StringVar(&configFile, "config", "newrelic_exporter.yml", "Config file path")
+	flag.StringVar(&logLevel, "log.level", "info", "Log level (debug, info, warn, error)")
+	flag.BoolVar(&logJSON, "log.json", false, "Output logs in JSON format")
 	flag.BoolVar(&printDefaults, "print-defaults", false, "Print default configuration values and exit")
 	flag.StringVar(&generateConfig, "generate-config", "", "Generate a default configuration file at the specified path and exit")
 	flag.Parse()
+
+	// Setup logging
+	logger.Setup(logger.Config{
+		Level:      logger.LogLevel(logLevel),
+		JSONFormat: logJSON,
+	})
 
 	// Handle utility flags
 	if printDefaults {
@@ -31,20 +41,20 @@ func main() {
 	if generateConfig != "" {
 		err := config.WriteDefaultConfig(generateConfig)
 		if err != nil {
-			log.Fatalf("Failed to generate config: %v", err)
+			logger.Fatalf("Failed to generate config: %v", err)
 		}
-		log.Infof("Default configuration written to: %s", generateConfig)
-		log.Info("Please edit the file to set your API key and other required fields")
+		logger.Infof("Default configuration written to: %s", generateConfig)
+		logger.Info("Please edit the file to set your API key and other required fields")
 		return
 	}
 
 	// Load configuration with defaults
 	cfg, err := config.GetConfig(configFile)
 	if err != nil {
-		log.Fatalf("Error loading config file '%s': %v", configFile, err)
+		logger.Fatalf("Error loading config file '%s': %v", configFile, err)
 	}
 
-	log.Infof("Configuration loaded successfully from %s", configFile)
+	logger.Infof("Configuration loaded successfully from %s", configFile)
 
 	api := newrelic.NewAPI(cfg)
 
@@ -64,10 +74,10 @@ func main() {
 `))
 	})
 
-	log.Printf("Listening on %s.", cfg.ListenAddress)
+	logger.Infof("Listening on %s", cfg.ListenAddress)
 	err = http.ListenAndServe(cfg.ListenAddress, nil)
 	if err != nil {
-		log.Fatal(err)
+		logger.Fatal(err)
 	}
-	log.Print("HTTP server stopped.")
+	logger.Info("HTTP server stopped")
 }
