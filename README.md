@@ -2,6 +2,15 @@
 
 Prometheus exporter for New Relic data.
 Requires a New Relic account.
+
+## Docker Hub
+
+Pre-built Docker images are automatically published to Docker Hub:
+- **Latest stable:** `docker pull mrf/newrelic-exporter:latest`
+- **Specific version:** `docker pull mrf/newrelic-exporter:1.0.0`
+
+Docker images are automatically built and published on every release using GitHub Actions.
+
 ## Building and running
 
 ### Running in a container
