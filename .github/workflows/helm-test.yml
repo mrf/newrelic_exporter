@@ -318,21 +318,14 @@ jobs:
 
       - name: Modify values and upgrade
         run: |
-          # Create modified values
-          cat > /tmp/upgrade-values.yaml <<EOF
-          replicaCount: 2
-          newrelic:
-            apiKey: "test-key-upgraded"
-            service: "applications"
-            timeout: "30s"
-            includeMetricFilters:
-              - "HttpDispatcher"
-              - "Database"
-          EOF
-
-          # Upgrade
+          # Upgrade with modified replica count and additional metric filter
           helm upgrade upgrade-test ./helm/newrelic-exporter \
-            --values /tmp/upgrade-values.yaml \
+            --values ./helm/newrelic-exporter/values-test.yaml \
+            --set replicaCount=2 \
+            --set newrelic.apiKey="test-key-upgraded" \
+            --set newrelic.timeout="30s" \
+            --set newrelic.includeMetricFilters[0]="HttpDispatcher" \
+            --set newrelic.includeMetricFilters[1]="Database" \
             --namespace default \
             --wait \
             --timeout 300s
