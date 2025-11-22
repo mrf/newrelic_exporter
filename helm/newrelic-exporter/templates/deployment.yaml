@@ -35,12 +35,6 @@ spec:
         imagePullPolicy: {{ .Values.image.pullPolicy }}
         args:
           - --config=/etc/newrelic-exporter/newrelic_exporter.yml
-        env:
-        - name: API_KEY
-          valueFrom:
-            secretKeyRef:
-              name: {{ include "newrelic-exporter.secretName" . }}
-              key: api-key
         ports:
         - name: metrics
           containerPort: 9126

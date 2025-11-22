@@ -6,6 +6,13 @@ metadata:
     {{- include "newrelic-exporter.labels" . | nindent 4 }}
 data:
   newrelic_exporter.yml: |
+    # New Relic API key
+    {{- if .Values.newrelic.existingSecret }}
+    # API key will be provided from existing secret
+    {{- else }}
+    api.key: {{ .Values.newrelic.apiKey | quote }}
+    {{- end }}
+
     # API location
     api.server: {{ .Values.newrelic.server }}
 
