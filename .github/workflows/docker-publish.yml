@@ -54,12 +54,12 @@ jobs:
             type=semver,pattern={{major}}.{{minor}}
             # Tag with major version (v1.0.0 -> 1)
             type=semver,pattern={{major}}
-            # Tag with git short SHA
-            type=sha,prefix={{branch}}-
+            # Tag with git short SHA for branches (not PRs)
+            type=sha,enable={{is_default_branch}}
             # Tag with branch name for non-main branches
             type=ref,event=branch
             # Tag with PR number
-            type=ref,event=pr
+            type=ref,event=pr,prefix=pr-
 
       - name: Build and push Docker image
         uses: docker/build-push-action@v5
