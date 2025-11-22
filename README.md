@@ -201,9 +201,27 @@ docker build -t ghcr.io/mrf/newrelic-exporter:latest .
 This project includes automated CI/CD pipelines:
 
 - **GitHub Actions**: Builds, tests, and publishes Docker images on every push and release
+- **Helm Chart Testing**: Automated Helm chart validation and testing with Kind
 - **CircleCI**: Alternative CI/CD pipeline with advanced features
 
 See [`.github/workflows/`](.github/workflows/) and [`.circleci/`](.circleci/) for configuration details.
+
+### Helm Chart Testing
+
+The Helm chart is automatically tested using Kind (Kubernetes in Docker) to ensure it works correctly. Tests include:
+
+- Chart linting and validation
+- Installation in a real Kubernetes cluster
+- Resource validation (deployments, services, pods, etc.)
+- Connectivity and metrics endpoint testing
+- Upgrade scenario testing
+
+For local testing and detailed information, see the [Helm Testing Guide](HELM_TESTING.md).
+
+**Quick local test:**
+```bash
+./scripts/test-helm-chart.sh
+```
 
 ## Contributing
 
@@ -214,7 +232,9 @@ We welcome contributions! Please see our [Contributing Guide](CONTRIBUTING.md) f
 1. Fork the repository
 2. Create a feature branch (`git checkout -b feature/amazing-feature`)
 3. Make your changes
-4. Run tests (`go test ./...`)
+4. Run tests:
+   - Go tests: `go test ./...`
+   - Helm chart tests: `./scripts/test-helm-chart.sh`
 5. Commit your changes (`git commit -m 'Add amazing feature'`)
 6. Push to the branch (`git push origin feature/amazing-feature`)
 7. Open a Pull Request

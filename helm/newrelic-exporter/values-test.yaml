@@ -1,0 +1,69 @@
+# Test values for Helm chart validation
+# These values are used for automated testing with Kind
+
+replicaCount: 1
+
+image:
+  repository: ghcr.io/mrf/newrelic-exporter
+  pullPolicy: IfNotPresent
+  tag: "latest"
+
+serviceAccount:
+  create: true
+  annotations: {}
+  name: ""
+
+podAnnotations:
+  prometheus.io/scrape: "true"
+  prometheus.io/port: "9126"
+  prometheus.io/path: "/metrics"
+
+service:
+  type: NodePort
+  port: 9126
+  targetPort: 9126
+  nodePort: 30926
+  annotations: {}
+
+# New Relic API configuration for testing
+newrelic:
+  # Use a dummy API key for testing (validation only)
+  apiKey: "test-api-key-for-validation-only"
+
+  server: "https://api.newrelic.com"
+  period: 60
+  timeout: "15s"
+  service: "applications"
+
+  appsListCacheTime: "1h"
+  metricNamesCacheTime: "1h"
+
+  includeApps: []
+
+  # Minimal metric filters for testing
+  includeMetricFilters:
+    - "HttpDispatcher"
+    - "Apdex"
+
+  includeValues: []
+
+web:
+  listenAddress: ":9126"
+  telemetryPath: "/metrics"
+
+debug:
+  proxyAddress: ""
+
+resources:
+  limits:
+    cpu: 200m
+    memory: 256Mi
+  requests:
+    cpu: 100m
+    memory: 128Mi
+
+nodeSelector: {}
+
+tolerations: []
+
+affinity: {}

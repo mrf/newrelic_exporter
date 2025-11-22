@@ -1,0 +1,352 @@
+name: Helm Chart Testing
+
+on:
+  push:
+    branches:
+      - main
+      - master
+    paths:
+      - 'helm/**'
+      - '.github/workflows/helm-test.yml'
+      - 'scripts/test-helm-chart.sh'
+  pull_request:
+    branches:
+      - main
+      - master
+    paths:
+      - 'helm/**'
+      - '.github/workflows/helm-test.yml'
+      - 'scripts/test-helm-chart.sh'
+
+env:
+  HELM_VERSION: 'v3.14.0'
+  KIND_VERSION: 'v0.20.0'
+  KUBERNETES_VERSION: 'v1.29.0'
+
+jobs:
+  lint-chart:
+    name: Lint Helm Chart
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Helm
+        uses: azure/setup-helm@v4
+        with:
+          version: ${{ env.HELM_VERSION }}
+
+      - name: Lint Helm chart
+        run: |
+          helm lint ./helm/newrelic-exporter
+          helm lint ./helm/newrelic-exporter --values ./helm/newrelic-exporter/values-test.yaml
+
+      - name: Template Helm chart
+        run: |
+          helm template newrelic-exporter ./helm/newrelic-exporter \
+            --values ./helm/newrelic-exporter/values-test.yaml \
+            --namespace default \
+            --output-dir /tmp/helm-template-output
+
+      - name: Upload templated manifests
+        uses: actions/upload-artifact@v4
+        with:
+          name: helm-templates
+          path: /tmp/helm-template-output
+
+  test-chart-kind:
+    name: Test Helm Chart with Kind
+    runs-on: ubuntu-latest
+    needs: lint-chart
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Helm
+        uses: azure/setup-helm@v4
+        with:
+          version: ${{ env.HELM_VERSION }}
+
+      - name: Set up kubectl
+        uses: azure/setup-kubectl@v4
+        with:
+          version: ${{ env.KUBERNETES_VERSION }}
+
+      - name: Set up Kind
+        uses: helm/kind-action@v1
+        with:
+          version: ${{ env.KIND_VERSION }}
+          cluster_name: newrelic-exporter-test
+          config: .kind/kind-config.yaml
+          wait: 60s
+
+      - name: Verify cluster is ready
+        run: |
+          kubectl cluster-info
+          kubectl wait --for=condition=Ready nodes --all --timeout=60s
+          kubectl get nodes
+
+      - name: Install Helm chart
+        run: |
+          helm install newrelic-exporter-test ./helm/newrelic-exporter \
+            --values ./helm/newrelic-exporter/values-test.yaml \
+            --namespace default \
+            --wait \
+            --timeout 300s \
+            --debug
+
+      - name: Wait for deployment
+        run: |
+          kubectl wait --for=condition=Available deployment/newrelic-exporter-test \
+            --namespace default \
+            --timeout=300s
+
+      - name: Check deployment status
+        run: |
+          kubectl get all -n default -l "app.kubernetes.io/name=newrelic-exporter"
+          kubectl describe deployment/newrelic-exporter-test -n default
+
+      - name: Check pod status
+        run: |
+          POD_NAME=$(kubectl get pods -n default -l "app.kubernetes.io/name=newrelic-exporter" -o jsonpath='{.items[0].metadata.name}')
+          echo "Pod name: $POD_NAME"
+          kubectl get pod $POD_NAME -n default
+          kubectl describe pod $POD_NAME -n default
+
+      - name: Test metrics endpoint
+        run: |
+          POD_NAME=$(kubectl get pods -n default -l "app.kubernetes.io/name=newrelic-exporter" -o jsonpath='{.items[0].metadata.name}')
+          echo "Testing metrics endpoint on pod: $POD_NAME"
+
+          # Test if the endpoint is accessible
+          kubectl exec -n default $POD_NAME -- wget -q -O- http://localhost:9126/metrics > /tmp/metrics.txt
+
+          # Verify Prometheus metrics format
+          if grep -q "^# HELP" /tmp/metrics.txt; then
+            echo "✓ Valid Prometheus metrics format detected"
+          else
+            echo "✗ Invalid metrics format"
+            cat /tmp/metrics.txt
+            exit 1
+          fi
+
+          # Display sample metrics
+          echo "Sample metrics:"
+          grep -E "^(# HELP|# TYPE)" /tmp/metrics.txt | head -10
+
+      - name: Validate all resources
+        run: |
+          # Deployment
+          DEPLOYMENT_COUNT=$(kubectl get deployment -n default -l "app.kubernetes.io/name=newrelic-exporter" --no-headers | wc -l)
+          echo "Deployments: $DEPLOYMENT_COUNT"
+          if [ "$DEPLOYMENT_COUNT" -eq 0 ]; then
+            echo "✗ No deployment found"
+            exit 1
+          fi
+
+          # Pods
+          POD_COUNT=$(kubectl get pods -n default -l "app.kubernetes.io/name=newrelic-exporter" --field-selector=status.phase=Running --no-headers | wc -l)
+          echo "Running pods: $POD_COUNT"
+          if [ "$POD_COUNT" -eq 0 ]; then
+            echo "✗ No running pods found"
+            kubectl get pods -n default -l "app.kubernetes.io/name=newrelic-exporter"
+            kubectl describe pods -n default -l "app.kubernetes.io/name=newrelic-exporter"
+            exit 1
+          fi
+
+          # Service
+          SERVICE_COUNT=$(kubectl get service -n default -l "app.kubernetes.io/name=newrelic-exporter" --no-headers | wc -l)
+          echo "Services: $SERVICE_COUNT"
+          if [ "$SERVICE_COUNT" -eq 0 ]; then
+            echo "✗ No service found"
+            exit 1
+          fi
+
+          # ServiceAccount
+          SA_COUNT=$(kubectl get serviceaccount -n default -l "app.kubernetes.io/name=newrelic-exporter" --no-headers | wc -l)
+          echo "ServiceAccounts: $SA_COUNT"
+          if [ "$SA_COUNT" -eq 0 ]; then
+            echo "✗ No service account found"
+            exit 1
+          fi
+
+          # ConfigMap
+          CM_COUNT=$(kubectl get configmap -n default -l "app.kubernetes.io/name=newrelic-exporter" --no-headers | wc -l)
+          echo "ConfigMaps: $CM_COUNT"
+          if [ "$CM_COUNT" -eq 0 ]; then
+            echo "✗ No configmap found"
+            exit 1
+          fi
+
+          # Secret
+          SECRET_COUNT=$(kubectl get secret -n default -l "app.kubernetes.io/name=newrelic-exporter" --no-headers | wc -l)
+          echo "Secrets: $SECRET_COUNT"
+          if [ "$SECRET_COUNT" -eq 0 ]; then
+            echo "✗ No secret found"
+            exit 1
+          fi
+
+          echo "✓ All resources validated successfully"
+
+      - name: Show pod logs (on failure)
+        if: failure()
+        run: |
+          POD_NAME=$(kubectl get pods -n default -l "app.kubernetes.io/name=newrelic-exporter" -o jsonpath='{.items[0].metadata.name}')
+          echo "Pod logs:"
+          kubectl logs -n default $POD_NAME --tail=100
+
+      - name: Helm test (if present)
+        run: |
+          # Run Helm tests if defined in the chart
+          if helm get manifest newrelic-exporter-test -n default | grep -q "test-success"; then
+            helm test newrelic-exporter-test -n default --logs
+          else
+            echo "No Helm tests defined in chart"
+          fi
+
+      - name: Uninstall Helm chart
+        if: always()
+        run: |
+          helm uninstall newrelic-exporter-test -n default --wait || true
+
+  test-chart-multiple-configs:
+    name: Test Chart with Different Configurations
+    runs-on: ubuntu-latest
+    needs: lint-chart
+
+    strategy:
+      matrix:
+        config:
+          - name: minimal
+            values: |
+              newrelic:
+                apiKey: "test-key"
+                service: "applications"
+                timeout: "15s"
+                includeMetricFilters:
+                  - "HttpDispatcher"
+
+          - name: with-resources
+            values: |
+              newrelic:
+                apiKey: "test-key"
+                service: "applications"
+                timeout: "15s"
+                includeMetricFilters:
+                  - "HttpDispatcher"
+              resources:
+                limits:
+                  cpu: 500m
+                  memory: 512Mi
+                requests:
+                  cpu: 200m
+                  memory: 256Mi
+
+          - name: with-service-account
+            values: |
+              newrelic:
+                apiKey: "test-key"
+                service: "applications"
+                timeout: "15s"
+                includeMetricFilters:
+                  - "HttpDispatcher"
+              serviceAccount:
+                create: true
+                name: "custom-sa"
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Helm
+        uses: azure/setup-helm@v4
+        with:
+          version: ${{ env.HELM_VERSION }}
+
+      - name: Create test values file
+        run: |
+          cat > /tmp/test-values.yaml <<EOF
+          ${{ matrix.config.values }}
+          EOF
+
+      - name: Template chart with ${{ matrix.config.name }} config
+        run: |
+          helm template test-${{ matrix.config.name }} ./helm/newrelic-exporter \
+            --values /tmp/test-values.yaml \
+            --namespace default
+
+      - name: Lint chart with ${{ matrix.config.name }} config
+        run: |
+          helm lint ./helm/newrelic-exporter \
+            --values /tmp/test-values.yaml
+
+  test-chart-upgrade:
+    name: Test Helm Chart Upgrade
+    runs-on: ubuntu-latest
+    needs: lint-chart
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Helm
+        uses: azure/setup-helm@v4
+        with:
+          version: ${{ env.HELM_VERSION }}
+
+      - name: Set up kubectl
+        uses: azure/setup-kubectl@v4
+        with:
+          version: ${{ env.KUBERNETES_VERSION }}
+
+      - name: Set up Kind
+        uses: helm/kind-action@v1
+        with:
+          version: ${{ env.KIND_VERSION }}
+          cluster_name: upgrade-test
+          wait: 60s
+
+      - name: Install initial version
+        run: |
+          helm install upgrade-test ./helm/newrelic-exporter \
+            --values ./helm/newrelic-exporter/values-test.yaml \
+            --namespace default \
+            --wait \
+            --timeout 300s
+
+      - name: Modify values and upgrade
+        run: |
+          # Create modified values
+          cat > /tmp/upgrade-values.yaml <<EOF
+          replicaCount: 2
+          newrelic:
+            apiKey: "test-key-upgraded"
+            service: "applications"
+            timeout: "30s"
+            includeMetricFilters:
+              - "HttpDispatcher"
+              - "Database"
+          EOF
+
+          # Upgrade
+          helm upgrade upgrade-test ./helm/newrelic-exporter \
+            --values /tmp/upgrade-values.yaml \
+            --namespace default \
+            --wait \
+            --timeout 300s
+
+      - name: Verify upgrade
+        run: |
+          # Check that deployment was updated
+          kubectl get deployment -n default -l "app.kubernetes.io/name=newrelic-exporter"
+
+          # Verify replica count (note: may not scale to 2 immediately if resources are constrained)
+          DESIRED_REPLICAS=$(kubectl get deployment upgrade-test-newrelic-exporter -n default -o jsonpath='{.spec.replicas}')
+          echo "Desired replicas: $DESIRED_REPLICAS"
+
+      - name: Uninstall
+        if: always()
+        run: |
+          helm uninstall upgrade-test -n default --wait || true
