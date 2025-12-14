@@ -80,12 +80,14 @@ jobs:
 
       - name: Deploy badge to badges branch
         if: github.ref == 'refs/heads/master' && github.event_name == 'push'
+        continue-on-error: true
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
 
-          # Save the badge file
+          # Save the badge file and remove from working tree
           cp coverage-badge.svg /tmp/coverage-badge.svg
+          rm -f coverage-badge.svg
 
           # Try to checkout existing badges branch, or create new orphan branch
           if git fetch origin badges 2>/dev/null; then
