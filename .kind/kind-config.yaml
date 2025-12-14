@@ -1,0 +1,10 @@
+kind: Cluster
+apiVersion: kind.x-k8s.io/v1alpha4
+name: newrelic-exporter-test
+nodes:
+  - role: control-plane
+    extraPortMappings:
+      # Expose the exporter service for testing
+      - containerPort: 30926
+        hostPort: 9126
+        protocol: TCP
