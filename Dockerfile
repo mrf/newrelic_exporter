@@ -1,12 +1,15 @@
-FROM golang:1.25 AS builder
+FROM --platform=$BUILDPLATFORM golang:1.25 AS builder
+
+ARG TARGETOS
+ARG TARGETARCH
 
 COPY . /app
 
 RUN cd /app \
-  && go get -v -d \
-  && CGO_ENABLED=0 go build -o newrelic_exporter
+  && go mod download \
+  && CGO_ENABLED=0 GOOS=${TARGETOS} GOARCH=${TARGETARCH} go build -o newrelic_exporter
 
-FROM alpine:latest
+FROM alpine:3.20
 
 RUN apk --no-cache add ca-certificates
 
