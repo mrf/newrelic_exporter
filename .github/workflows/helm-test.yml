@@ -70,7 +70,7 @@ jobs:
           version: ${{ env.HELM_VERSION }}
 
       - name: Set up kubectl
-        uses: azure/setup-kubectl@v4
+        uses: azure/setup-kubectl@v5
         with:
           version: ${{ env.KUBERNETES_VERSION }}
 
@@ -297,7 +297,7 @@ jobs:
           version: ${{ env.HELM_VERSION }}
 
       - name: Set up kubectl
-        uses: azure/setup-kubectl@v4
+        uses: azure/setup-kubectl@v5
         with:
           version: ${{ env.KUBERNETES_VERSION }}
 
