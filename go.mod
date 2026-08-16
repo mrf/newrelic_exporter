@@ -7,7 +7,7 @@ toolchain go1.25.0
 require (
 	github.com/antonholmquist/jason v1.0.0
 	github.com/prometheus/client_golang v1.23.2
-	github.com/sirupsen/logrus v1.9.4
+	github.com/sirupsen/logrus v1.10.0
 	gopkg.in/yaml.v2 v2.4.0
 )
 
