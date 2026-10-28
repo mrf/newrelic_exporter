@@ -27,7 +27,7 @@ The CI/CD pipeline automatically:
 Runs on: `ubuntu-latest`
 
 - Checks out code
-- Sets up Go 1.21
+- Sets up the Go version declared in `go.mod` (Go 1.26)
 - Downloads and verifies dependencies
 - Runs `go vet` for static analysis
 - Checks code formatting with `gofmt`
