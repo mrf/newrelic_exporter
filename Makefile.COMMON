@@ -9,7 +9,7 @@ ifeq ($(GOOS),darwin)
 	RELEASE_SUFFIX ?= -osx$(shell sw_vers -productVersion)
 endif
 
-GO_VERSION ?= 1.13.9
+GO_VERSION ?= 1.26.8
 
 ifeq ($(shell type go >/dev/null && go version | sed 's/.*go\([0-9.]*\).*/\1/'), $(GO_VERSION))
 	GOROOT := $(shell go env GOROOT)
@@ -43,7 +43,7 @@ $(GOCC):
 	curl -L $(GOURL)/$(GOPKG) | tar -C $(GOROOT) --strip 1 -xz
 
 $(BINARY): $(GOCC) $(SRC) Makefile Makefile.COMMON
-	$(GO) get -d
+	$(GO) mod download
 	$(GO) build $(GOFLAGS) -o $@
 
 .PHONY: archive

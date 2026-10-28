@@ -81,7 +81,7 @@ If you find a bug or have a feature request:
 
 #### Prerequisites
 
-- Go 1.21 or later
+- Go 1.26 or later
 - Make (optional, for using Makefile)
 - Docker (for testing containerized builds)
 

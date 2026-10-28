@@ -12,7 +12,7 @@ This project has been migrated from the legacy GOPATH-based dependency managemen
 
 ### After
 - Dependencies are managed via `go.mod` and `go.sum`
-- Works with any Go 1.21+ installation
+- Works with any Go 1.26+ installation
 - Reproducible builds with locked dependency versions
 - Simpler project setup and contribution process
 
@@ -224,7 +224,7 @@ The old `Makefile.COMMON` is retained for reference but is no longer used. The s
 ## Questions?
 
 If you encounter issues with Go modules:
-- Check that you're using Go 1.21 or later: `go version`
+- Check that you're using Go 1.26 or later: `go version`
 - Try clearing the module cache: `go clean -modcache`
 - Re-download dependencies: `go mod download`
 - Ask in GitHub Issues or Discussions
